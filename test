@@ -1,0 +1,69 @@
+import fs from "node: fs/promises";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { fromTokenFile } from "@aws-sdk/credential-providers";
+import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
+import { ProxyAgent } from "proxy-agent";
+import logger from './logger.js';
+
+class S3ObjectGetter {
+    constructor(client, bucket) {
+        this.client = client;
+        this.bucket = bucket;
+    }
+
+    get(path) {
+        const command = new GetObjectCommand({
+            Bucket: this.bucket,
+            Key: path.replace(/\+/, ''),
+        });
+        return this.client.send(command);
+    }
+}
+
+export default function createS3Client({ type, bucket }) {
+    if (type === "local") {
+        return fs;
+    }
+    if (type === "aws") {
+        const proxy = new ProxyAgent();
+        const requestHandler = new NodeHttpHandler({
+            httpAgent: proxy,
+            httpsAgent: proxy,
+        });
+
+        const client = new S3Client({
+            region: process.env.AWS_REGION,
+            credentials: fromTokenFile(),
+            logger: console
+            //requestHandler: requestHandler,
+        });
+
+        const objectGetter = new S3ObjectGetter(client, bucket);
+
+        return {
+            readFile: async (path) => {
+                try {
+                    // Call the get method of objectGetter to retrieve the object from S3
+                    const objectData = await objectGetter.get(path);
+                    // Transform the object data to a string or Buffer as needed
+                    const objectString = objectData.Body.toString(); // Example transformation to string
+                    return objectString;
+                } catch (error) {
+                    logger.error(error);
+                    throw error;
+                }
+            },
+            getObject: async (path) => {
+                try {
+                    // Call the get method of objectGetter to retrieve the object from S3
+                    const objectData = await objectGetter.get(path);
+                    return objectData;
+                } catch (error) {
+                    logger.error(error);
+                    throw error;
+                }
+            },
+        };
+    }
+    throw new Error(`Unknown type: ${type}`);
+}
