@@ -1,69 +1,39 @@
-import fs from "node: fs/promises";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import { fromTokenFile } from "@aws-sdk/credential-providers";
-import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
-import { ProxyAgent } from "proxy-agent";
-import logger from './logger.js';
+import { createWriteStream } from "fs";
 
-class S3ObjectGetter {
-    constructor(client, bucket) {
-        this.client = client;
-        this.bucket = bucket;
+class S3ObjectDownloader {
+    constructor(options) {
+        this.s3Client = new S3Client(options);
     }
 
-    get(path) {
+    async downloadObject(s3Path, localFilePath) {
+        const fileStream = createWriteStream(localFilePath);
+
         const command = new GetObjectCommand({
-            Bucket: this.bucket,
-            Key: path.replace(/\+/, ''),
+            Bucket: s3Path.bucket,
+            Key: s3Path.key
         });
-        return this.client.send(command);
+
+        try {
+            const response = await this.s3Client.send(command);
+
+            response.Body.pipe(fileStream);
+
+            return new Promise((resolve, reject) => {
+                fileStream.on('finish', () => {
+                    console.log(`File downloaded from ${s3Path} to ${localFilePath}`);
+                    resolve();
+                });
+
+                fileStream.on('error', (error) => {
+                    reject(error);
+                });
+            });
+        } catch (error) {
+            console.error('Error downloading object from S3:', error);
+            throw error;
+        }
     }
 }
 
-export default function createS3Client({ type, bucket }) {
-    if (type === "local") {
-        return fs;
-    }
-    if (type === "aws") {
-        const proxy = new ProxyAgent();
-        const requestHandler = new NodeHttpHandler({
-            httpAgent: proxy,
-            httpsAgent: proxy,
-        });
-
-        const client = new S3Client({
-            region: process.env.AWS_REGION,
-            credentials: fromTokenFile(),
-            logger: console
-            //requestHandler: requestHandler,
-        });
-
-        const objectGetter = new S3ObjectGetter(client, bucket);
-
-        return {
-            readFile: async (path) => {
-                try {
-                    // Call the get method of objectGetter to retrieve the object from S3
-                    const objectData = await objectGetter.get(path);
-                    // Transform the object data to a string or Buffer as needed
-                    const objectString = objectData.Body.toString(); // Example transformation to string
-                    return objectString;
-                } catch (error) {
-                    logger.error(error);
-                    throw error;
-                }
-            },
-            getObject: async (path) => {
-                try {
-                    // Call the get method of objectGetter to retrieve the object from S3
-                    const objectData = await objectGetter.get(path);
-                    return objectData;
-                } catch (error) {
-                    logger.error(error);
-                    throw error;
-                }
-            },
-        };
-    }
-    throw new Error(`Unknown type: ${type}`);
-}
+export default S3ObjectDownloader;
