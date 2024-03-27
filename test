@@ -1,39 +1,95 @@
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import { createWriteStream } from "fs";
 
-class S3ObjectDownloader {
-    constructor(options) {
-        this.s3Client = new S3Client(options);
-    }
+import {
+  wrap,
+  withErrorHandler,
+  withCache,
+  withTimer,
+} from "../common/utils.js";
+import createHybridFS from "../common/hybrid-fs.js"; 
+import config from "../config.js";
+import logger from "../common/logger.js";
+import knex from "knex";
 
-    async downloadObject(s3Path, localFilePath) {
-        const fileStream = createWriteStream(localFilePath);
+const dbOpts = {
+  reconnect_flag: true,
+  db: null,
+};
 
-        const command = new GetObjectCommand({
-            Bucket: s3Path.bucket,
-            Key: s3Path.key
-        });
+setInterval(function() {
+  // Download new S3 file
+  // Assuming the download process sets reconnect_flag to true upon success
+  dbOpts['reconnect_flag'] = true;
+}, 1000);
 
-        try {
-            const response = await this.s3Client.send(command);
-
-            response.Body.pipe(fileStream);
-
-            return new Promise((resolve, reject) => {
-                fileStream.on('finish', () => {
-                    console.log(`File downloaded from ${s3Path} to ${localFilePath}`);
-                    resolve();
-                });
-
-                fileStream.on('error', (error) => {
-                    reject(error);
-                });
-            });
-        } catch (error) {
-            console.error('Error downloading object from S3:', error);
-            throw error;
-        }
-    }
+function getDb() {
+  if (dbOpts['reconnect_flag']) {
+    const db = knex({
+      // Configure Knex options here
+    });
+    dbOpts['reconnect_flag'] = false;
+    dbOpts['db'] = db;
+    return dbOpts['db'];
+  }
+  return dbOpts['db'];
 }
 
-export default S3ObjectDownloader;
+const binEndpoint = config.resolveEndpoint("client.bin", ["file:", "s3:"]);
+const localpath = config.get("localpath");
+const fetchInterval = config.get("fetchinterval");
+const path = '/db/payments.db';
+const hfs = createHybridFS(binEndpoint);
+
+async function fetchBin(prefix) {
+  const rows = await getDb()
+    .column({
+      binLength: "binCharacterLengthCount",
+      brandCode: "paymentBrandCode",
+      brandCardTypeCode: "paymentBrandCardTypeCode",
+      cardProgramIdentificationCode: "brandedCardProgramIdentificationCode",
+      onlineGamblXbrdr: "onlineGamblXbrdr",
+      rangeBin: "rangeBin"
+    })
+    .select()
+    .from("bin-manager")
+    .where("rangeBin", prefix)
+    .limit(1);
+  const transformed = _.map(rows, (row) => {
+    const onlineGamblXbrdr = row.onlineGamblXbrdr === "N" ? false : true;
+    return {
+      ...row,
+      onlineGamblXbrdr,
+    };
+  });
+  return _.first(transformed);
+}
+
+async function refreshData(binEndpoint, localpath) {
+  if (!fs.existsSync(localpath)) {
+    fs.mkdirSync(localpath, { recursive: true });
+  }
+  const fullPath = `${binEndpoint.prefix}${path}`;
+  try {
+    const objectData = await hfs.getObject(fullPath);
+    const fileStream = fs.createWriteStream(`${localpath}/payments.db`);
+    objectData.pipe(fileStream);
+    objectData.on('end', () => {
+      logger.info('Object downloaded successfully.');
+    });
+  } catch (error) {
+    logger.error('Error downloading object:', error);
+  }
+}
+
+refreshData(binEndpoint, localpath);
+
+setInterval(async () => {
+  logger.info("Inside scheduled pull");
+  await refreshData(binEndpoint, localpath);
+}, fetchInterval);
+
+export const getBin = wrap(
+  fetchBin,
+  withErrorHandler(logger),
+  withTimer("getBin"),
+  withCache
+);
