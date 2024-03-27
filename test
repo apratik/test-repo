@@ -1,37 +1,9 @@
-
-import {
-  wrap,
-  withErrorHandler,
-  withCache,
-  withTimer,
-} from "../common/utils.js";
-import createHybridFS from "../common/hybrid-fs.js"; 
+import { wrap, withErrorHandler, withCache, withTimer } from "../common/utils.js";
+import createHybridFS from "../common/hybrid-fs.js";
 import config from "../config.js";
 import logger from "../common/logger.js";
 import knex from "knex";
-
-const dbOpts = {
-  reconnect_flag: true,
-  db: null,
-};
-
-setInterval(function() {
-  // Download new S3 file
-  // Assuming the download process sets reconnect_flag to true upon success
-  dbOpts['reconnect_flag'] = true;
-}, 1000);
-
-function getDb() {
-  if (dbOpts['reconnect_flag']) {
-    const db = knex({
-      // Configure Knex options here
-    });
-    dbOpts['reconnect_flag'] = false;
-    dbOpts['db'] = db;
-    return dbOpts['db'];
-  }
-  return dbOpts['db'];
-}
+import fs, { createWriteStream } from 'fs';
 
 const binEndpoint = config.resolveEndpoint("client.bin", ["file:", "s3:"]);
 const localpath = config.get("localpath");
@@ -39,55 +11,95 @@ const fetchInterval = config.get("fetchinterval");
 const path = '/db/payments.db';
 const hfs = createHybridFS(binEndpoint);
 
+const dbopts = {
+  reconnect_flag: false,
+  db: null
+};
+
+setInterval(async function() {
+  try {
+    await refreshData(binEndpoint, localpath);
+    dbopts.reconnect_flag = true;
+  } catch (error) {
+    logger.error('Error during scheduled pull:', error);
+  }
+}, fetchInterval);
+
+function getDb() {
+  if (dbopts.reconnect_flag) {
+    const db = knex({
+      client: "sqlite3",
+      connection: {
+        filename: "./data/payments.db"
+      },
+      useNullAsDefault: true,
+      debug: true
+    });
+    dbopts.reconnect_flag = false;
+    dbopts.db = db;
+    return dbopts.db;
+  }
+  return dbopts.db;
+}
+
 async function fetchBin(prefix) {
-  const rows = await getDb()
-    .column({
-      binLength: "binCharacterLengthCount",
-      brandCode: "paymentBrandCode",
-      brandCardTypeCode: "paymentBrandCardTypeCode",
-      cardProgramIdentificationCode: "brandedCardProgramIdentificationCode",
-      onlineGamblXbrdr: "onlineGamblXbrdr",
-      rangeBin: "rangeBin"
-    })
-    .select()
-    .from("bin-manager")
-    .where("rangeBin", prefix)
-    .limit(1);
-  const transformed = _.map(rows, (row) => {
-    const onlineGamblXbrdr = row.onlineGamblXbrdr === "N" ? false : true;
-    return {
-      ...row,
-      onlineGamblXbrdr,
-    };
-  });
-  return _.first(transformed);
+  try {
+    const rows = await getDb()
+      .column({
+        binLength: "binCharacter LengthCount",
+        brandCode: "payment BrandCode",
+        brandCardTypeCode: "payment BrandCard TypeCode",
+        cardProgramIdentificationCode: "branded Card ProgramIdent",
+        onlineGamblXbrdr: "onlineGamblXbrdr",
+        rangeBin: "range Bin"
+      })
+      .select()
+      .from('bin-manager')
+      .where('rangeBin', prefix)
+      .limit(1);
+      
+    const transformed = rows.map(row => {
+      const onlineGamblXbrdr = row.onlineGamblXbrdr === "N" ? false : true;
+      return {
+        ...row,
+        onlineGamblXbrdr,
+      };
+    });
+
+    return transformed[0];
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function refreshData(binEndpoint, localpath) {
-  if (!fs.existsSync(localpath)) {
-    fs.mkdirSync(localpath, { recursive: true });
-  }
-  const fullPath = `${binEndpoint.prefix}${path}`;
   try {
+    if (!fs.existsSync(localpath)) {
+      fs.mkdirSync(localpath, { recursive: true });
+    }
+
+    const fullPath = `${binEndpoint.prefix}${path}`;
     const objectData = await hfs.getObject(fullPath);
-    const fileStream = fs.createWriteStream(`${localpath}/payments.db`);
+
+    const fileStream = createWriteStream(`${localpath}/payments.db`);
     objectData.pipe(fileStream);
-    objectData.on('end', () => {
-      logger.info('Object downloaded successfully.');
+
+    return new Promise((resolve, reject) => {
+      fileStream.on('finish', () => {
+        logger.info('Object downloaded successfully.');
+        resolve();
+      });
+      fileStream.on('error', (error) => {
+        logger.error('Error writing file:', error);
+        reject(error);
+      });
     });
   } catch (error) {
-    logger.error('Error downloading object:', error);
+    throw error;
   }
 }
 
-refreshData(binEndpoint, localpath);
-
-setInterval(async () => {
-  logger.info("Inside scheduled pull");
-  await refreshData(binEndpoint, localpath);
-}, fetchInterval);
-
-export const getBin = wrap(
+export default wrap(
   fetchBin,
   withErrorHandler(logger),
   withTimer("getBin"),
