@@ -20,7 +20,6 @@
         <div id="leftPanel">
             <h3>Available Components</h3>
             <div id="componentButtons"></div>
-            <button id="addNewComponentButton">Add New Component</button>
         </div>
 
         <!-- Graph display area -->
@@ -34,23 +33,6 @@
             <button id="downloadGraphButton">Download SVG</button>
             <button id="copyJsonButton">Copy Workflow JSON</button>
         </div>
-    </div>
-
-    <!-- Popup for adding a new component -->
-    <div id="addComponentPopup" class="hidden">
-        <h3>Add New Component</h3>
-        <label for="taskName">Task Name:</label>
-        <input type="text" id="taskName" placeholder="Task Name" />
-        <label for="componentType">Component Type:</label>
-        <input type="text" id="componentType" placeholder="Component Type" />
-        <label for="prevTask">Previous Task:</label>
-        <input type="text" id="prevTask" placeholder="Previous Task ID" />
-        <label for="nextSuccess">Next On Success:</label>
-        <input type="text" id="nextSuccess" placeholder="Next On Success ID" />
-        <label for="nextFailure">Next On Failure:</label>
-        <input type="text" id="nextFailure" placeholder="Next On Failure ID" />
-        <button id="addComponentToGraphButton">Add Component</button>
-        <button id="cancelAddComponentButton">Cancel</button>
     </div>
 
     <script src="https://d3js.org/d3.v6.min.js"></script>
