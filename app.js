@@ -1,172 +1,176 @@
+let workflowData = [];
+
+// Handle file upload and JSON parsing
 document.getElementById("jsonFileInput").addEventListener("change", handleFileUpload);
-document.getElementById("generateFlowButton").addEventListener("click", renderGraph);
-document.getElementById("exportButton").addEventListener("click", exportWorkflow);
-document.getElementById("downloadGraphButton").addEventListener("click", downloadGraph);
-document.getElementById("copyJsonButton").addEventListener("click", copyJson);
+document.getElementById("generateFlowButton").addEventListener("click", generateFlow);
 
-let workflowData = { workflowTasks: [] };
-let nodes = [];
-let links = [];
-const colorMap = {}; // This will map each type to a specific color
+// Handle component selection and configuration display
+document.getElementById("closeConfigButton").addEventListener("click", closeConfigPanel);
 
+// Load the workflow data and generate flow
 function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            workflowData = JSON.parse(e.target.result);
-            generateComponentPanel();
-            renderGraph();
-        };
-        reader.readAsText(file);
-    }
+    const reader = new FileReader();
+    reader.onload = function() {
+        try {
+            workflowData = JSON.parse(reader.result);
+            populateComponentPanel(workflowData);
+        } catch (e) {
+            console.error("Invalid JSON format.");
+        }
+    };
+    reader.readAsText(event.target.files[0]);
 }
 
-function generateComponentPanel() {
-    const uniqueTypes = Array.from(new Set(workflowData.workflowTasks.map(task => task.type)));
-    const componentButtons = document.getElementById("componentButtons");
-    componentButtons.innerHTML = "";
+// Populate the left panel with component buttons based on the loaded JSON
+function populateComponentPanel(data) {
+    const componentButtonsContainer = document.getElementById("componentButtons");
+    componentButtonsContainer.innerHTML = ""; // Clear any existing buttons
 
-    uniqueTypes.forEach(type => {
-        if (!colorMap[type]) {
-            colorMap[type] = getColorForType(type);
-        }
-        createComponentButton(type);
+    // Generate buttons for each component
+    data.forEach((component, index) => {
+        const button = document.createElement("button");
+        button.textContent = `${component.type} - ${component.taskId}`;
+        button.addEventListener("click", () => showComponentConfig(component));
+        componentButtonsContainer.appendChild(button);
     });
 }
 
-function getColorForType(type) {
-    // Generate a consistent color for each type (you can change this logic as needed)
-    const hash = Array.from(type).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return `hsl(${hash % 360}, 70%, 60%)`; // Color based on hash of type
+// Show the configuration for the selected component
+function showComponentConfig(component) {
+    const configPanel = document.getElementById("componentConfigText");
+    configPanel.value = JSON.stringify(component, null, 2); // Display formatted JSON
 }
 
-function createComponentButton(type) {
-    const componentButtons = document.getElementById("componentButtons");
-    const btn = document.createElement("button");
-    btn.className = "component-button";
-    btn.textContent = type;
-    btn.style.backgroundColor = colorMap[type];
-    componentButtons.appendChild(btn);
+// Close the config panel
+function closeConfigPanel() {
+    const configPanel = document.getElementById("componentConfigText");
+    configPanel.value = ""; // Clear the content
 }
 
-function renderGraph() {
-    // Ensure nodes are created correctly from workflowData
-    nodes = workflowData.workflowTasks.map(task => ({
-        id: task.taskId,  // Ensuring that each node has a unique 'id'
-        type: task.type,
-        name: task.name
-    }));
-
-    // Ensure links are created correctly
-    links = [];
-
-    workflowData.workflowTasks.forEach(task => {
-        if (task.prev) {
-            const prevNode = nodes.find(node => node.id === task.prev);
-            if (prevNode) {
-                links.push({ source: prevNode, target: task.taskId });
-            }
-        }
-
-        if (task.nextOnSuccess && task.nextOnSuccess.length > 0) {
-            task.nextOnSuccess.forEach(nextTaskId => {
-                const nextNode = nodes.find(node => node.id === nextTaskId);
-                if (nextNode) {
-                    links.push({ source: task.taskId, target: nextNode });
-                }
-            });
-        }
-
-        if (task.nextOnFailure && task.nextOnFailure.length > 0) {
-            task.nextOnFailure.forEach(nextTaskId => {
-                const nextNode = nodes.find(node => node.id === nextTaskId);
-                if (nextNode) {
-                    links.push({ source: task.taskId, target: nextNode });
-                }
-            });
-        }
-    });
-
-    // Check if nodes and links are correct before proceeding
-    if (nodes.length === 0 || links.length === 0) {
-        console.error("No valid nodes or links found!");
-        return; // Exit if no valid nodes or links
+// Generate the workflow graph
+function generateFlow() {
+    if (workflowData.length > 0) {
+        renderGraph(workflowData);
     }
+}
 
-    const svg = d3.select("#graph").html("").append("svg")
-        .attr("width", 2000)
-        .attr("height", 1500)
+// Rendering graph functionality
+function renderGraph(data) {
+    const width = document.getElementById('graph').offsetWidth;
+    const height = document.getElementById('graph').offsetHeight;
+
+    const svg = d3.select("#graph").append("svg")
+        .attr("width", width)
+        .attr("height", height)
         .append("g");
 
-    const link = svg.selectAll(".link")
-        .data(links)
+    // Set up the force simulation for the graph
+    const simulation = d3.forceSimulation(data)
+        .force("link", d3.forceLink().id(d => d.taskId).distance(200))
+        .force("charge", d3.forceManyBody().strength(-500))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    // Links (arrows between nodes)
+    const links = svg.selectAll(".link")
+        .data(generateLinks(data))
         .enter().append("line")
         .attr("class", "link")
-        .attr("marker-end", "url(#arrowhead)");
+        .attr("stroke", "#999")
+        .attr("stroke-width", 2);
 
-    const node = svg.selectAll(".node")
-        .data(nodes)
+    // Nodes (components)
+    const nodes = svg.selectAll(".node")
+        .data(data)
         .enter().append("g")
         .attr("class", "node")
-        .call(d3.drag());
+        .attr("transform", d => `translate(${d.x},${d.y})`);
 
-    node.append("rect")
+    nodes.append("rect")
         .attr("width", 120)
-        .attr("height", 50)
-        .attr("fill", d => colorMap[d.type]); // Color based on the type
+        .attr("height", 60)
+        .attr("rx", 10)
+        .attr("ry", 10)
+        .attr("fill", d => getNodeColor(d.type))
+        .on("click", (event, d) => showComponentConfig(d));
 
-    node.append("text")
+    nodes.append("text")
         .attr("x", 60)
-        .attr("y", 25)
-        .attr("dy", "1.5em")
+        .attr("y", 30)
+        .attr("dy", ".35em")
         .attr("text-anchor", "middle")
-        .text(d => d.name);
+        .attr("fill", "white")
+        .text(d => d.taskId);
 
-    svg.append("defs").append("marker")
-        .attr("id", "arrowhead")
-        .attr("viewBox", "0 0 10 10")
-        .attr("refX", 5)
-        .attr("refY", 5)
-        .attr("markerWidth", 4)
-        .attr("markerHeight", 4)
-        .attr("orient", "auto")
-        .append("path")
-        .attr("d", "M 0 0 L 10 5 L 0 10 Z")
-        .attr("fill", "#000");
-
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(150))
-        .force("charge", d3.forceManyBody().strength(-300))
-        .force("center", d3.forceCenter(1000, 750));
-
+    // Update positions after each simulation tick
     simulation.on("tick", () => {
-        link.attr("x1", d => d.source.x)
+        links
+            .attr("x1", d => d.source.x)
             .attr("y1", d => d.source.y)
             .attr("x2", d => d.target.x)
             .attr("y2", d => d.target.y);
 
-        node.attr("transform", d => `translate(${d.x - 60},${d.y - 25})`);
+        nodes
+            .attr("transform", d => `translate(${d.x},${d.y})`);
     });
 }
 
-function exportWorkflow() {
-    const json = JSON.stringify(workflowData, null, 2);
-    alert(`Exported JSON:\n${json}`);
+// Generate links based on prev and next nodes (nextOnSuccess and nextOnFailure)
+function generateLinks(data) {
+    let links = [];
+    data.forEach(node => {
+        if (node.nextOnSuccess) {
+            let target = data.find(d => d.taskId === node.nextOnSuccess);
+            if (target) {
+                links.push({ source: node, target: target });
+            }
+        }
+        if (node.nextOnFailure) {
+            let target = data.find(d => d.taskId === node.nextOnFailure);
+            if (target) {
+                links.push({ source: node, target: target });
+            }
+        }
+    });
+    return links;
 }
 
-function downloadGraph() {
-    const svgContent = d3.select("svg").node().outerHTML;
-    const blob = new Blob([svgContent], { type: "image/svg+xml" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "workflow.svg";
-    link.click();
+// Get the color for each component based on its type
+function getNodeColor(type) {
+    const colorMap = {
+        "Type1": "#FF5733",
+        "Type2": "#33FF57",
+        "Type3": "#3357FF"
+    };
+    return colorMap[type] || "#CCCCCC"; // Default color if type is unknown
 }
 
-function copyJson() {
-    const json = JSON.stringify(workflowData, null, 2);
-    navigator.clipboard.writeText(json).then(() => {
+// Export workflow JSON to file
+document.getElementById("exportButton").addEventListener("click", function() {
+    const blob = new Blob([JSON.stringify(workflowData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "workflow.json";
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// Download the graph as SVG
+document.getElementById("downloadGraphButton").addEventListener("click", function() {
+    const svg = document.querySelector("svg");
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([svgData], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "workflow.svg";
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// Copy workflow JSON to clipboard
+document.getElementById("copyJsonButton").addEventListener("click", function() {
+    navigator.clipboard.writeText(JSON.stringify(workflowData, null, 2)).then(() => {
         alert("Workflow JSON copied to clipboard!");
     });
-}
+});
