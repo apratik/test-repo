@@ -7,18 +7,17 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div id="componentPanel">
-            <input type="file" id="jsonFileInput">
-            <button id="addNewComponentButton">Add New Component</button>
-            <div id="componentButtons"></div>
-        </div>
-        <div id="graph"></div>
-    </div>
-    <div id="actionButtons">
+    <div id="toolbar">
+        <input type="file" id="jsonFileInput">
         <button id="exportButton">Export Workflow</button>
         <button id="downloadGraphButton">Download Graph</button>
         <button id="copyJsonButton">Copy JSON</button>
+        <input type="text" id="newComponentInput" placeholder="New Component Type">
+        <button id="addNewComponentButton">Add New Component</button>
+    </div>
+    <div id="componentButtons"></div>
+    <div id="scrollableContainer">
+        <div id="graph"></div>
     </div>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="app.js"></script>
