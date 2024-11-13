@@ -3,28 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflow Flowchart</title>
+    <title>Workflow Visualization</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <div class="sidebar">
-            <h3>Components</h3>
-            <div id="componentButtons"></div>
-            <input type="text" id="newComponentInput" placeholder="New Component Type">
+        <div id="componentPanel">
+            <input type="file" id="jsonFileInput">
             <button id="addNewComponentButton">Add New Component</button>
+            <div id="componentButtons"></div>
         </div>
-
-        <div class="main-content">
-            <h2>Workflow Graph</h2>
-            <input type="file" id="jsonFileInput" accept=".json">
-            <button id="exportButton">Export Workflow</button>
-            <button id="downloadGraphButton">Download Graph</button>
-            <button id="copyJsonButton">Copy Workflow JSON</button>
-            <div id="graph"></div>
-        </div>
+        <div id="graph"></div>
     </div>
-
+    <div id="actionButtons">
+        <button id="exportButton">Export Workflow</button>
+        <button id="downloadGraphButton">Download Graph</button>
+        <button id="copyJsonButton">Copy JSON</button>
+    </div>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="app.js"></script>
 </body>
