@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Workflow Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <h1>Interactive Workflow Visualizer</h1>
+
+    <div id="container">
+        <!-- File upload section -->
+        <input type="file" id="jsonFileInput" accept=".json">
+        
+        <!-- Component Panel -->
+        <div id="panel">
+            <h2>Components</h2>
+            <div id="componentButtons"></div>
+            
+            <!-- New Component Type Input -->
+            <div id="newComponentContainer">
+                <input type="text" id="newComponentInput" placeholder="New Component Type">
+                <button id="addNewComponentButton">Add Type</button>
+            </div>
+        </div>
+
+        <!-- Graph Area -->
+        <div id="graph"></div>
+    </div>
+
+    <!-- Action buttons -->
+    <button id="exportButton">Export JSON</button>
+    <button id="downloadGraphButton">Download Visualization</button>
+    <button id="copyJsonButton">Copy JSON</button>
+
+    <script src="app.js"></script>
+</body>
+</html>
