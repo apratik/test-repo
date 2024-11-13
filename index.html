@@ -3,39 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flowchart with D3.js</title>
+    <title>Workflow Flowchart</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://d3js.org/d3.v6.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Flowchart Editor</h1>
-        
-        <!-- Component Panel -->
-        <div id="componentPanel">
-            <input type="text" id="newComponentInput" placeholder="New Component Type" />
-            <button id="addNewComponentButton">Add New Component</button>
+        <div class="sidebar">
+            <h3>Components</h3>
             <div id="componentButtons"></div>
+            <input type="text" id="newComponentInput" placeholder="New Component Type">
+            <button id="addNewComponentButton">Add New Component</button>
         </div>
 
-        <!-- File upload section -->
-        <div>
-            <input type="file" id="jsonFileInput" accept=".json" />
-        </div>
-
-        <!-- Graph Rendering Section -->
-        <div id="graphWrapper">
-            <div id="graph"></div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div id="actionButtons">
+        <div class="main-content">
+            <h2>Workflow Graph</h2>
+            <input type="file" id="jsonFileInput" accept=".json">
             <button id="exportButton">Export Workflow</button>
             <button id="downloadGraphButton">Download Graph</button>
-            <button id="copyJsonButton">Copy JSON</button>
+            <button id="copyJsonButton">Copy Workflow JSON</button>
+            <div id="graph"></div>
         </div>
     </div>
 
+    <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
