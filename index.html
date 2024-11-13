@@ -3,54 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Component Workflow Diagram</title>
+    <title>Workflow Designer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="container">
-        <div id="upload-area">
-            <h2>Upload Workflow</h2>
+    <div id="app">
+        <h1>Workflow Designer</h1>
+
+        <!-- JSON Upload Section -->
+        <div id="jsonUploadContainer">
             <input type="file" id="jsonFileInput" accept=".json" />
+            <button id="generateFlowButton">Generate Flow</button>
         </div>
 
-        <div id="component-area">
-            <h2>Add Components</h2>
+        <!-- Left Panel: Available Components -->
+        <div id="leftPanel">
+            <h3>Available Components</h3>
             <button id="addNewComponentButton">Add New Component</button>
         </div>
 
-        <div id="display-area">
-            <h2>Workflow Diagram</h2>
-            <div id="graph"></div>
+        <!-- Main Graph Section -->
+        <div id="mainGraphContainer">
+            <div id="scrollableContainer">
+                <div id="graph"></div>
+            </div>
         </div>
 
-        <div id="action-area">
-            <h2>Actions</h2>
+        <!-- Action Area: Export, Download, Copy -->
+        <div id="actionArea">
             <button id="exportButton">Export Workflow</button>
-            <button id="downloadGraphButton">Download Graph as SVG</button>
-            <button id="copyJsonButton">Copy JSON to Clipboard</button>
+            <button id="downloadGraphButton">Download SVG</button>
+            <button id="copyJsonButton">Copy Workflow JSON</button>
         </div>
     </div>
 
-    <!-- Popup for adding components -->
-    <div id="addComponentPopup" class="popup hidden">
-        <div class="popup-content">
-            <h3>Add Component</h3>
-            <label for="taskName">Task Name</label>
-            <input type="text" id="taskName" />
-            <label for="componentType">Component Type</label>
-            <input type="text" id="componentType" />
-            <label for="prevTask">Previous Task ID</label>
-            <input type="text" id="prevTask" />
-            <label for="nextSuccess">Next on Success</label>
-            <input type="text" id="nextSuccess" />
-            <label for="nextFailure">Next on Failure</label>
-            <input type="text" id="nextFailure" />
-            <button id="addComponentToGraphButton">Add Component</button>
-            <button id="closePopupButton">Close</button>
-        </div>
+    <!-- Popup for adding a new component -->
+    <div id="addComponentPopup" class="hidden">
+        <h3>Add New Component</h3>
+        <label for="taskName">Task Name:</label>
+        <input type="text" id="taskName" placeholder="Task Name" />
+        <label for="prevTask">Previous Task:</label>
+        <input type="text" id="prevTask" placeholder="Previous Task ID" />
+        <label for="nextSuccess">Next On Success:</label>
+        <input type="text" id="nextSuccess" placeholder="Next On Success ID" />
+        <label for="nextFailure">Next On Failure:</label>
+        <input type="text" id="nextFailure" placeholder="Next On Failure ID" />
+        <button id="addComponentToGraphButton">Add Component</button>
+        <button id="closePopupButton">Cancel</button>
     </div>
 
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
