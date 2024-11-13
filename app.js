@@ -54,21 +54,45 @@ function addNewComponentType() {
 }
 
 function renderGraph() {
-    d3.select("#graph").html(""); // Clear existing graph
+    d3.select("#graph").html("");
     const svg = d3.select("#graph").append("svg").attr("width", 1000).attr("height", 600);
 
-    // Set up hierarchical layout for flowchart style
+    nodes = workflowData.workflowTasks.map(task => ({
+        id: task.taskId,
+        type: task.type,
+        name: task.name,
+        prev: task.prev,
+        nextOnSuccess: task.nextOnSuccess,
+        nextOnFailure: task.nextOnFailure
+    }));
+
+    links = [];
+    const taskIds = new Set(nodes.map(node => node.id));
+
+    workflowData.workflowTasks.forEach(task => {
+        if (task.nextOnSuccess) {
+            task.nextOnSuccess.forEach(n => {
+                if (taskIds.has(n)) {
+                    links.push({ source: task.taskId, target: n, type: "success" });
+                }
+            });
+        }
+        if (task.nextOnFailure) {
+            task.nextOnFailure.forEach(n => {
+                if (taskIds.has(n)) {
+                    links.push({ source: task.taskId, target: n, type: "failure" });
+                }
+            });
+        }
+    });
+
     const hierarchyData = d3.stratify()
         .id(d => d.taskId)
-        .parentId(d => d.prev)(workflowData.workflowTasks);
+        .parentId(d => d.prev || null)(workflowData.workflowTasks);
 
-    // Layout settings (space between nodes, etc.)
     const treeLayout = d3.tree().size([1000, 500]).separation((a, b) => a.parent === b.parent ? 1 : 2);
-
-    // Apply the tree layout to the data
     const treeData = treeLayout(hierarchyData);
 
-    // Create nodes
     nodes = treeData.descendants();
     links = treeData.links();
 
@@ -80,7 +104,6 @@ function renderGraph() {
         .attr("stroke-width", 2)
         .attr("marker-end", "url(#arrow)");
 
-    // Create node groups
     const node = svg.selectAll(".node")
         .data(nodes)
         .enter().append("g")
@@ -102,7 +125,19 @@ function renderGraph() {
         .attr("fill", "white")
         .text(d => `${d.data.name} (${d.data.type})`);
 
-    // Define arrow markers
+    node.append("foreignObject")
+        .attr("x", 60)
+        .attr("y", -20)
+        .attr("width", 30)
+        .attr("height", 30)
+        .append("xhtml:button")
+        .attr("class", "delete-button")
+        .text("X")
+        .on("click", function (event, d) {
+            deleteNode(d.data.id);
+            renderGraph();
+        });
+
     svg.append("defs").append("marker")
         .attr("id", "arrow")
         .attr("viewBox", "0 0 10 10")
@@ -115,39 +150,19 @@ function renderGraph() {
         .attr("d", "M 0 0 L 10 5 L 0 10 Z")
         .attr("fill", "black");
 
-    // Simulation for dragging (optional)
-    node.call(d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended));
-
-    function dragstarted(event, d) {
-        if (!event.active) treeLayout.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
-
-    function dragged(event, d) {
-        d.fx = event.x;
-        d.fy = event.y;
-    }
-
-    function dragended(event, d) {
-        if (!event.active) treeLayout.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+    function deleteNode(nodeId) {
+        // Remove the node and any links associated with it
+        workflowData.workflowTasks = workflowData.workflowTasks.filter(task => task.taskId !== nodeId);
+        workflowData.workflowTasks.forEach(task => {
+            task.nextOnSuccess = task.nextOnSuccess.filter(id => id !== nodeId);
+            task.nextOnFailure = task.nextOnFailure.filter(id => id !== nodeId);
+        });
     }
 }
 
 function addComponent(type) {
     const newId = `task_${nodes.length + 1}`;
-    workflowData.workflowTasks.push({
-        taskId: newId, 
-        type: type, 
-        prev: nodes.length > 0 ? nodes[nodes.length - 1].data.taskId : null,
-        nextOnSuccess: [], 
-        nextOnFailure: []
-    });
+    workflowData.workflowTasks.push({ taskId: newId, type: type, prev: null, nextOnSuccess: [], nextOnFailure: [] });
     nodes.push({ id: newId, type: type });
     renderGraph();
 }
@@ -157,25 +172,27 @@ function exportWorkflow() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "updated_workflow.json";
-    document.body.appendChild(a);
+    a.download = "workflow.json";
     a.click();
-    document.body.removeChild(a);
 }
 
 function downloadGraph() {
-    const svgData = new XMLSerializer().serializeToString(d3.select("svg").node());
-    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(svgBlob);
+    const svg = document.querySelector("svg");
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([svgData], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "workflow_visualization.svg";
-    document.body.appendChild(a);
+    a.download = "graph.svg";
     a.click();
-    document.body.removeChild(a);
 }
 
 function copyWorkflowJSON() {
-    navigator.clipboard.writeText(JSON.stringify(workflowData, null, 2))
-        .then(() => alert("Workflow JSON copied to clipboard"));
+    const textArea = document.createElement("textarea");
+    textArea.value = JSON.stringify(workflowData, null, 2);
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textArea);
+    alert("Workflow JSON copied to clipboard.");
 }
