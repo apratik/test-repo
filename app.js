@@ -1,3 +1,4 @@
+// Event listeners for buttons
 document.getElementById("jsonFileInput").addEventListener("change", handleFileUpload);
 document.getElementById("exportButton").addEventListener("click", exportWorkflow);
 document.getElementById("downloadGraphButton").addEventListener("click", downloadGraph);
@@ -8,6 +9,7 @@ let workflowData = { WorkflowTasks: [] };
 let nodes = [];
 let links = [];
 
+// Handle JSON file upload
 function handleFileUpload(event) {
     const file = event.target.files[0];
     if (file) {
@@ -49,7 +51,6 @@ function addNewComponentType() {
     const newType = newTypeInput.value.trim();
 
     if (newType && !workflowData.WorkflowTasks.some(task => task.type === newType)) {
-        // Add the new type to the panel and clear input
         createComponentButton(newType);
         newTypeInput.value = "";
     } else {
@@ -130,7 +131,7 @@ function renderGraph() {
 // Add new component to the graph
 function addComponent(type) {
     const newId = `task_${nodes.length + 1}`;
-    workflowData.WorkflowTasks.push({ taskId: newId, type: type, prev: [], nextOnSuccess: [], nextOnFailure: [] });
+    workflowData.WorkflowTasks.push({ taskId: newId, type: type, nextOnSuccess: [], nextOnFailure: [] });
     nodes.push({ id: newId, type: type });
     renderGraph();
 }
