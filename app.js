@@ -1,13 +1,13 @@
 document.getElementById("jsonFileInput").addEventListener("change", handleFileUpload);
 document.getElementById("generateFlowButton").addEventListener("click", renderGraph);
-document.getElementById("addNewComponentButton").addEventListener("click", showAddComponentPopup);
-document.getElementById("addComponentToGraphButton").addEventListener("click", addComponentToGraph);
-document.getElementById("cancelAddComponentButton").addEventListener("click", hideAddComponentPopup);
+document.getElementById("exportButton").addEventListener("click", exportWorkflow);
+document.getElementById("downloadGraphButton").addEventListener("click", downloadGraph);
+document.getElementById("copyJsonButton").addEventListener("click", copyJson);
 
 let workflowData = { workflowTasks: [] };
 let nodes = [];
 let links = [];
-const colorMap = new Map();
+const colorMap = {}; // This will map each type to a specific color
 
 function handleFileUpload(event) {
     const file = event.target.files[0];
@@ -28,11 +28,17 @@ function generateComponentPanel() {
     componentButtons.innerHTML = "";
 
     uniqueTypes.forEach(type => {
-        if (!colorMap.has(type)) {
-            colorMap.set(type, `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`);
+        if (!colorMap[type]) {
+            colorMap[type] = getColorForType(type);
         }
         createComponentButton(type);
     });
+}
+
+function getColorForType(type) {
+    // Generate a consistent color for each type (you can change this logic as needed)
+    const hash = Array.from(type).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return `hsl(${hash % 360}, 70%, 60%)`; // Color based on hash of type
 }
 
 function createComponentButton(type) {
@@ -40,46 +46,22 @@ function createComponentButton(type) {
     const btn = document.createElement("button");
     btn.className = "component-button";
     btn.textContent = type;
-    btn.style.backgroundColor = colorMap.get(type);
-    btn.addEventListener("click", () => addComponent(type));
+    btn.style.backgroundColor = colorMap[type];
     componentButtons.appendChild(btn);
 }
 
-function showAddComponentPopup() {
-    document.getElementById("addComponentPopup").style.display = "block";
-}
-
-function hideAddComponentPopup() {
-    document.getElementById("addComponentPopup").style.display = "none";
-}
-
-function addComponentToGraph() {
-    const taskName = document.getElementById("taskName").value;
-    const componentType = document.getElementById("componentType").value;
-    const prevTask = document.getElementById("prevTask").value;
-    const nextSuccess = document.getElementById("nextSuccess").value;
-    const nextFailure = document.getElementById("nextFailure").value;
-
-    const newTask = {
-        taskId: "T" + (workflowData.workflowTasks.length + 1),
-        name: taskName,
-        type: componentType,
-        prev: prevTask || null,
-        nextOnSuccess: nextSuccess ? [nextSuccess] : [],
-        nextOnFailure: nextFailure ? [nextFailure] : []
-    };
-
-    workflowData.workflowTasks.push(newTask);
-    hideAddComponentPopup();
-    renderGraph();
-}
-
 function renderGraph() {
-    nodes = workflowData.workflowTasks.map(task => ({ id: task.taskId, type: task.type, name: task.name }));
+    nodes = workflowData.workflowTasks.map(task => ({
+        id: task.taskId,
+        type: task.type,
+        name: task.name
+    }));
+
+    // Links will be created based on prev, nextOnSuccess, and nextOnFailure
     links = workflowData.workflowTasks.flatMap(task => [
-        ...(task.prev ? [{ source: task.prev, target: task.taskId }] : []),
-        ...task.nextOnSuccess.map(next => ({ source: task.taskId, target: next })),
-        ...task.nextOnFailure.map(next => ({ source: task.taskId, target: next }))
+        ...(task.prev ? [{ source: task.prev, target: task.taskId }] : []), // prev is null means start
+        ...(task.nextOnSuccess && task.nextOnSuccess.length > 0 ? task.nextOnSuccess.map(next => ({ source: task.taskId, target: next })) : []), // nextOnSuccess null means end
+        ...(task.nextOnFailure && task.nextOnFailure.length > 0 ? task.nextOnFailure.map(next => ({ source: task.taskId, target: next })) : []) // nextOnFailure null means end
     ]);
 
     const svg = d3.select("#graph").html("").append("svg")
@@ -100,24 +82,16 @@ function renderGraph() {
         .call(d3.drag());
 
     node.append("rect")
-        .attr("width", 100)
+        .attr("width", 120)
         .attr("height", 50)
-        .attr("fill", d => colorMap.get(d.type));
+        .attr("fill", d => colorMap[d.type]); // Color based on the type
 
     node.append("text")
-        .attr("x", 50)
+        .attr("x", 60)
         .attr("y", 25)
         .attr("dy", "1.5em")
         .attr("text-anchor", "middle")
         .text(d => d.name);
-
-    node.append("text")
-        .attr("x", 50)
-        .attr("y", 40)
-        .attr("dy", "3em")
-        .attr("text-anchor", "middle")
-        .style("font-size", "10px")
-        .text(d => d.id);
 
     svg.append("defs").append("marker")
         .attr("id", "arrowhead")
@@ -132,8 +106,8 @@ function renderGraph() {
         .attr("fill", "#000");
 
     const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(100))
-        .force("charge", d3.forceManyBody().strength(-200))
+        .force("link", d3.forceLink(links).id(d => d.id).distance(150))
+        .force("charge", d3.forceManyBody().strength(-300))
         .force("center", d3.forceCenter(1000, 750));
 
     simulation.on("tick", () => {
@@ -142,6 +116,27 @@ function renderGraph() {
             .attr("x2", d => d.target.x)
             .attr("y2", d => d.target.y);
 
-        node.attr("transform", d => `translate(${d.x - 50},${d.y - 25})`);
+        node.attr("transform", d => `translate(${d.x - 60},${d.y - 25})`);
+    });
+}
+
+function exportWorkflow() {
+    const json = JSON.stringify(workflowData, null, 2);
+    alert(`Exported JSON:\n${json}`);
+}
+
+function downloadGraph() {
+    const svgContent = d3.select("svg").node().outerHTML;
+    const blob = new Blob([svgContent], { type: "image/svg+xml" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "workflow.svg";
+    link.click();
+}
+
+function copyJson() {
+    const json = JSON.stringify(workflowData, null, 2);
+    navigator.clipboard.writeText(json).then(() => {
+        alert("Workflow JSON copied to clipboard!");
     });
 }
