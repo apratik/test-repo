@@ -54,57 +54,38 @@ function addNewComponentType() {
 }
 
 function renderGraph() {
-    d3.select("#graph").html("");
-    const svg = d3.select("#graph").append("svg").attr("width", 800).attr("height", 600);
+    d3.select("#graph").html(""); // Clear existing graph
+    const svg = d3.select("#graph").append("svg").attr("width", 1000).attr("height", 600);
 
-    nodes = workflowData.workflowTasks.map(task => ({
-        id: task.taskId,
-        type: task.type,
-        name: task.name,
-        isStart: task.prev === null,         // Identify start node
-        isEnd: !task.nextOnSuccess && !task.nextOnFailure // Identify end node
-    }));
+    // Set up hierarchical layout for flowchart style
+    const hierarchyData = d3.stratify()
+        .id(d => d.taskId)
+        .parentId(d => d.prev)(workflowData.workflowTasks);
 
-    links = [];
-    const taskIds = new Set(nodes.map(node => node.id));
+    // Layout settings (space between nodes, etc.)
+    const treeLayout = d3.tree().size([1000, 500]).separation((a, b) => a.parent === b.parent ? 1 : 2);
 
-    workflowData.workflowTasks.forEach(task => {
-        if (task.nextOnSuccess) {
-            task.nextOnSuccess.forEach(n => {
-                if (taskIds.has(n)) {
-                    links.push({ source: task.taskId, target: n, type: "success" });
-                }
-            });
-        }
-        if (task.nextOnFailure) {
-            task.nextOnFailure.forEach(n => {
-                if (taskIds.has(n)) {
-                    links.push({ source: task.taskId, target: n, type: "failure" });
-                }
-            });
-        }
-    });
+    // Apply the tree layout to the data
+    const treeData = treeLayout(hierarchyData);
 
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(120))
-        .force("charge", d3.forceManyBody().strength(-400))
-        .force("center", d3.forceCenter(400, 300));
+    // Create nodes
+    nodes = treeData.descendants();
+    links = treeData.links();
 
     const link = svg.selectAll(".link")
         .data(links)
         .enter().append("line")
         .attr("class", "link")
-        .attr("stroke", d => d.type === "success" ? "green" : "red")
-        .attr("stroke-width", 2);
+        .attr("stroke", d => d.target.data.type === "success" ? "green" : "red")
+        .attr("stroke-width", 2)
+        .attr("marker-end", "url(#arrow)");
 
+    // Create node groups
     const node = svg.selectAll(".node")
         .data(nodes)
         .enter().append("g")
         .attr("class", "node")
-        .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
+        .attr("transform", d => `translate(${d.x},${d.y})`);
 
     node.append("rect")
         .attr("width", 120)
@@ -113,25 +94,35 @@ function renderGraph() {
         .attr("y", -20)
         .attr("rx", 6)
         .attr("ry", 6)
-        .attr("fill", d => d.isStart ? "blue" : d.isEnd ? "darkred" : "#3b8e8d");
+        .attr("fill", d => d.depth === 0 ? "blue" : d.depth === nodes.length - 1 ? "darkred" : "#3b8e8d");
 
     node.append("text")
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
         .attr("fill", "white")
-        .text(d => `${d.name} (${d.type})`);
+        .text(d => `${d.data.name} (${d.data.type})`);
 
-    simulation.on("tick", () => {
-        link.attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
+    // Define arrow markers
+    svg.append("defs").append("marker")
+        .attr("id", "arrow")
+        .attr("viewBox", "0 0 10 10")
+        .attr("refX", 10)
+        .attr("refY", 5)
+        .attr("markerWidth", 4)
+        .attr("markerHeight", 4)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M 0 0 L 10 5 L 0 10 Z")
+        .attr("fill", "black");
 
-        node.attr("transform", d => `translate(${d.x},${d.y})`);
-    });
+    // Simulation for dragging (optional)
+    node.call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
 
     function dragstarted(event, d) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
+        if (!event.active) treeLayout.alphaTarget(0.3).restart();
         d.fx = d.x;
         d.fy = d.y;
     }
@@ -142,7 +133,7 @@ function renderGraph() {
     }
 
     function dragended(event, d) {
-        if (!event.active) simulation.alphaTarget(0);
+        if (!event.active) treeLayout.alphaTarget(0);
         d.fx = null;
         d.fy = null;
     }
@@ -150,7 +141,13 @@ function renderGraph() {
 
 function addComponent(type) {
     const newId = `task_${nodes.length + 1}`;
-    workflowData.workflowTasks.push({ taskId: newId, type: type, prev: null, nextOnSuccess: [], nextOnFailure: [] });
+    workflowData.workflowTasks.push({
+        taskId: newId, 
+        type: type, 
+        prev: nodes.length > 0 ? nodes[nodes.length - 1].data.taskId : null,
+        nextOnSuccess: [], 
+        nextOnFailure: []
+    });
     nodes.push({ id: newId, type: type });
     renderGraph();
 }
