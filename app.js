@@ -3,32 +3,50 @@ let workflowData = {
     workflowTasks: []
 };
 
-// Add a new component (task) to the workflow
+// Function to open the Add Component Popup and collect form data
 function addComponent() {
-    const type = document.getElementById("newComponentInput").value;
-    const taskId = `task-${workflowData.workflowTasks.length + 1}`;
-    
-    const name = prompt("Enter Task Name:");
-    const prev = prompt("Enter Prev Task ID (leave blank for none):");
-    const nextOnSuccess = prompt("Enter Next On Success Task ID (comma separated):").split(",").filter(n => n.trim() !== "");
-    const nextOnFailure = prompt("Enter Next On Failure Task ID (comma separated):").split(",").filter(n => n.trim() !== "");
+    // Show the popup form
+    document.getElementById("addComponentPopup").classList.remove("hidden");
 
-    const newTask = {
-        taskId,
-        type,
-        name,
-        prev: prev || null,
-        nextOnSuccess: nextOnSuccess.length > 0 ? nextOnSuccess : null,
-        nextOnFailure: nextOnFailure.length > 0 ? nextOnFailure : null
-    };
+    // Listen for adding the component from the form
+    document.getElementById("addComponentToGraphButton").addEventListener("click", function() {
+        const name = document.getElementById("taskName").value;
+        const type = document.getElementById("componentType").value;
+        const prev = document.getElementById("prevTask").value;
+        const nextOnSuccess = document.getElementById("nextSuccess").value.split(",").filter(n => n.trim() !== "");
+        const nextOnFailure = document.getElementById("nextFailure").value.split(",").filter(n => n.trim() !== "");
 
-    workflowData.workflowTasks.push(newTask);
-    document.getElementById("newComponentInput").value = "";
-    renderGraph();
+        const taskId = `task-${workflowData.workflowTasks.length + 1}`;
+
+        // Create new task object
+        const newTask = {
+            taskId,
+            type,
+            name,
+            prev: prev || null,
+            nextOnSuccess: nextOnSuccess.length > 0 ? nextOnSuccess : null,
+            nextOnFailure: nextOnFailure.length > 0 ? nextOnFailure : null
+        };
+
+        // Add the new task to workflow data
+        workflowData.workflowTasks.push(newTask);
+
+        // Re-render the graph
+        renderGraph();
+
+        // Close the popup
+        document.getElementById("addComponentPopup").classList.add("hidden");
+    });
+
+    // Close popup if cancel is clicked
+    document.getElementById("cancelAddComponentButton").addEventListener("click", function() {
+        document.getElementById("addComponentPopup").classList.add("hidden");
+    });
 }
 
-// Render the graph (workflow diagram)
+// Render the workflow graph using D3.js
 function renderGraph() {
+    // Clear previous graph
     d3.select("#graph").html("");
 
     const svg = d3.select("#graph").append("svg").attr("width", 1000).attr("height", 600);
@@ -44,6 +62,7 @@ function renderGraph() {
     let links = [];
     const taskIds = new Set(nodes.map(node => node.id));
 
+    // Create links based on success and failure tasks
     workflowData.workflowTasks.forEach(task => {
         if (task.nextOnSuccess) {
             task.nextOnSuccess.forEach(n => {
@@ -66,6 +85,7 @@ function renderGraph() {
         .force("charge", d3.forceManyBody().strength(-400))
         .force("center", d3.forceCenter(500, 300));
 
+    // Create links (arrows)
     const link = svg.selectAll(".link")
         .data(links)
         .enter().append("line")
@@ -74,6 +94,7 @@ function renderGraph() {
         .attr("stroke-width", 2)
         .attr("marker-end", "url(#arrow)");
 
+    // Create nodes (task boxes)
     const node = svg.selectAll(".node")
         .data(nodes)
         .enter().append("g")
@@ -83,21 +104,24 @@ function renderGraph() {
             .on("drag", dragged)
             .on("end", dragended));
 
+    // Append rectangle for each task
     node.append("rect")
-        .attr("width", 120)
-        .attr("height", 40)
-        .attr("x", -60)
-        .attr("y", -20)
+        .attr("width", 120) // Width of the task box
+        .attr("height", 60) // Height of the task box
+        .attr("x", -60) // Centering the box
+        .attr("y", -30) // Centering the box
         .attr("rx", 6)
         .attr("ry", 6)
         .attr("fill", d => d.isStart ? "blue" : d.isEnd ? "darkred" : "#3b8e8d");
 
+    // Append task name text inside the box
     node.append("text")
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
         .attr("fill", "white")
-        .text(d => `${d.type} - ${d.id}`);
+        .text(d => `${d.type} - ${d.name}`);
 
+    // Add delete button to each task box
     node.append("foreignObject")
         .attr("width", 100)
         .attr("height", 30)
@@ -109,6 +133,7 @@ function renderGraph() {
             deleteComponent(d.id);
         });
 
+    // Arrow marker for success and failure links
     svg.append("defs").append("marker")
         .attr("id", "arrow")
         .attr("viewBox", "0 -5 10 10")
@@ -121,6 +146,7 @@ function renderGraph() {
         .attr("d", "M0,-5L10,0L0,5")
         .attr("fill", "#999");
 
+    // Run the simulation
     simulation.on("tick", () => {
         link.attr("x1", d => d.source.x)
             .attr("y1", d => d.source.y)
@@ -130,6 +156,7 @@ function renderGraph() {
         node.attr("transform", d => `translate(${d.x},${d.y})`);
     });
 
+    // Dragging functions for tasks
     function dragstarted(event, d) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
         d.fx = d.x;
@@ -148,7 +175,7 @@ function renderGraph() {
     }
 }
 
-// Delete a component and update the graph
+// Delete a component (task) and update the graph
 function deleteComponent(taskId) {
     workflowData.workflowTasks = workflowData.workflowTasks.filter(task => task.taskId !== taskId);
     renderGraph();
