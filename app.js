@@ -1,43 +1,42 @@
+// Initialize workflow data
 let workflowData = {
     workflowTasks: []
 };
 
-// Function to show the popup
-function showAddComponentPopup() {
+// Add a new component (task) to the workflow
+function addComponent() {
+    // Open the popup for adding a new component
     document.getElementById("addComponentPopup").classList.remove("hidden");
 }
 
-// Function to hide the popup
-function hideAddComponentPopup() {
-    document.getElementById("addComponentPopup").classList.add("hidden");
-}
-
-// Add a new component (task) to the workflow
-function addComponent() {
-    const taskName = document.getElementById("taskName").value;
-    const componentType = document.getElementById("componentType").value;
-    const prevTask = document.getElementById("prevTask").value;
+// Add the component to the workflow and render
+document.getElementById("addComponentToGraphButton").addEventListener("click", () => {
+    const name = document.getElementById("taskName").value;
+    const type = document.getElementById("componentType").value;
+    const prev = document.getElementById("prevTask").value;
     const nextSuccess = document.getElementById("nextSuccess").value.split(",").filter(n => n.trim() !== "");
     const nextFailure = document.getElementById("nextFailure").value.split(",").filter(n => n.trim() !== "");
 
+    // Task ID based on current tasks length
     const taskId = `task-${workflowData.workflowTasks.length + 1}`;
+
     const newTask = {
         taskId,
-        type: componentType,
-        name: taskName,
-        prev: prevTask || null,
+        type,
+        name,
+        prev: prev || null,
         nextOnSuccess: nextSuccess.length > 0 ? nextSuccess : null,
         nextOnFailure: nextFailure.length > 0 ? nextFailure : null
     };
 
     workflowData.workflowTasks.push(newTask);
+    document.getElementById("addComponentPopup").classList.add("hidden");
     renderGraph();
-    hideAddComponentPopup();
-}
+});
 
-// Render the graph (workflow diagram)
+// Render the graph (workflow diagram) as a linked list
 function renderGraph() {
-    d3.select("#graph").html("");
+    d3.select("#graph").html(""); // Clear existing graph
 
     const svg = d3.select("#graph").append("svg").attr("width", 1000).attr("height", 600);
 
@@ -45,26 +44,22 @@ function renderGraph() {
         id: task.taskId,
         type: task.type,
         name: task.name,
-        isStart: task.prev === null,
-        isEnd: !task.nextOnSuccess && !task.nextOnFailure
+        prev: task.prev,
+        nextOnSuccess: task.nextOnSuccess,
+        nextOnFailure: task.nextOnFailure
     }));
 
+    // Links for connections between tasks
     let links = [];
-    const taskIds = new Set(nodes.map(node => node.id));
-
-    workflowData.workflowTasks.forEach(task => {
+    nodes.forEach(task => {
         if (task.nextOnSuccess) {
             task.nextOnSuccess.forEach(n => {
-                if (taskIds.has(n)) {
-                    links.push({ source: task.taskId, target: n, type: "success" });
-                }
+                links.push({ source: task.taskId, target: n, type: "success" });
             });
         }
         if (task.nextOnFailure) {
             task.nextOnFailure.forEach(n => {
-                if (taskIds.has(n)) {
-                    links.push({ source: task.taskId, target: n, type: "failure" });
-                }
+                links.push({ source: task.taskId, target: n, type: "failure" });
             });
         }
     });
@@ -74,6 +69,7 @@ function renderGraph() {
         .force("charge", d3.forceManyBody().strength(-400))
         .force("center", d3.forceCenter(500, 300));
 
+    // Draw the connections (arrows between tasks)
     const link = svg.selectAll(".link")
         .data(links)
         .enter().append("line")
@@ -82,6 +78,7 @@ function renderGraph() {
         .attr("stroke-width", 2)
         .attr("marker-end", "url(#arrow)");
 
+    // Draw the nodes (tasks)
     const node = svg.selectAll(".node")
         .data(nodes)
         .enter().append("g")
@@ -98,14 +95,15 @@ function renderGraph() {
         .attr("y", -20)
         .attr("rx", 6)
         .attr("ry", 6)
-        .attr("fill", d => getComponentColor(d.type));
+        .attr("fill", "#3b8e8d");
 
     node.append("text")
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
         .attr("fill", "white")
-        .text(d => `${d.name} (${d.type})`);
+        .text(d => `${d.type} - ${d.id}`);
 
+    // Delete Button on each component
     node.append("foreignObject")
         .attr("width", 100)
         .attr("height", 30)
@@ -117,6 +115,7 @@ function renderGraph() {
             deleteComponent(d.id);
         });
 
+    // Arrow definition for connections
     svg.append("defs").append("marker")
         .attr("id", "arrow")
         .attr("viewBox", "0 -5 10 10")
@@ -162,24 +161,8 @@ function deleteComponent(taskId) {
     renderGraph();
 }
 
-// Function to return component color based on type
-function getComponentColor(type) {
-    switch(type) {
-        case 'TypeA': return '#4CAF50'; // Green
-        case 'TypeB': return '#008CBA'; // Blue
-        case 'TypeC': return '#f39c12'; // Orange
-        default: return '#ccc'; // Default gray color
-    }
-}
-
 // Initialize the add component button
-document.getElementById("addNewComponentButton").addEventListener("click", showAddComponentPopup);
-
-// Cancel adding component
-document.getElementById("cancelAddComponentButton").addEventListener("click", hideAddComponentPopup);
-
-// Add component to workflow after user inputs values
-document.getElementById("addComponentToGraphButton").addEventListener("click", addComponent);
+document.getElementById("addNewComponentButton").addEventListener("click", addComponent);
 
 // Load workflow JSON data from a file
 document.getElementById("jsonFileInput").addEventListener("change", event => {
@@ -221,9 +204,6 @@ document.getElementById("downloadGraphButton").addEventListener("click", () => {
 document.getElementById("copyJsonButton").addEventListener("click", () => {
     const json = JSON.stringify(workflowData, null, 2);
     navigator.clipboard.writeText(json).then(() => {
-        alert("Workflow copied to clipboard!");
+        alert("Workflow JSON copied to clipboard!");
     });
 });
-
-// Initialize workflow and render graph on page load
-renderGraph();
