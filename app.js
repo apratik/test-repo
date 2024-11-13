@@ -55,7 +55,7 @@ function addNewComponentType() {
 
 function renderGraph() {
     d3.select("#graph").html(""); // Clear previous graph
-    const svg = d3.select("#graph").append("svg").attr("width", 800).attr("height", 600);
+    const svg = d3.select("#graph").append("svg").attr("width", 1000).attr("height", 200);
 
     nodes = workflowData.workflowTasks.map(task => ({
         id: task.taskId,
@@ -86,53 +86,41 @@ function renderGraph() {
         }
     });
 
-    // Build a tree structure to organize nodes hierarchically
-    const root = { name: 'root', children: [] };
-    const nodeMap = {};
-
-    nodes.forEach(node => {
-        nodeMap[node.id] = node;
+    // Set node positions for a horizontal layout
+    let xPosition = 50;
+    nodes.forEach((node, i) => {
+        node.x = xPosition;
+        node.y = 100;
+        xPosition += 150; // Adjust the horizontal spacing between nodes
     });
 
-    nodes.forEach(node => {
-        const newNode = { name: node.name, id: node.id, parent: node.prev ? nodeMap[node.prev] : root };
-        (newNode.parent.children || (newNode.parent.children = [])).push(newNode);
-    });
-
-    // Using d3.tree() for hierarchical layout
-    const treeLayout = d3.tree().size([800, 600]).separation(function(a, b) { return a.parent === b.parent ? 1 : 3; });
-
-    const nodesData = treeLayout(root).descendants();  // Use d3.tree() for hierarchical layout
-    const linksData = treeLayout(root).links();  // Use d3.tree() for hierarchical links
-
+    // Create links (arrows between tasks)
     const link = svg.selectAll(".link")
-        .data(linksData)
+        .data(links)
         .enter().append("line")
         .attr("class", "link")
+        .attr("x1", d => getNodeById(d.source).x + 60)
+        .attr("y1", d => getNodeById(d.source).y)
+        .attr("x2", d => getNodeById(d.target).x - 60)
+        .attr("y2", d => getNodeById(d.target).y)
         .attr("stroke", d => d.type === "success" ? "green" : "red")
         .attr("stroke-width", 2);
 
+    // Create nodes (rectangles)
     const node = svg.selectAll(".node")
-        .data(nodesData)
+        .data(nodes)
         .enter().append("g")
         .attr("class", "node")
-        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-        .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
+        .attr("transform", d => `translate(${d.x}, ${d.y})`);
 
     node.append("rect")
         .attr("width", 120)
         .attr("height", 40)
-        .attr("x", -60)
-        .attr("y", -20)
         .attr("rx", 6)
         .attr("ry", 6)
         .attr("fill", d => {
-            // Special styling for start and end nodes
-            if (d.id === "root") return "blue"; // Start node
-            return "#3b8e8d"; // Regular middle nodes
+            if (d.prev === null) return "blue"; // Start node
+            return "#3b8e8d"; // Regular task node
         });
 
     node.append("text")
@@ -141,21 +129,8 @@ function renderGraph() {
         .attr("fill", "white")
         .text(d => `${d.name}`);
 
-    function dragstarted(event, d) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
-
-    function dragged(event, d) {
-        d.fx = event.x;
-        d.fy = event.y;
-    }
-
-    function dragended(event, d) {
-        if (!event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+    function getNodeById(id) {
+        return nodes.find(node => node.id === id);
     }
 }
 
