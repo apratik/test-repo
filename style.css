@@ -1,134 +1,161 @@
-/* General styles */
+/* Basic styling */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f9;
-    display: flex;
-    justify-content: center;
+    background-color: #f4f4f4;
 }
 
+/* Header */
 h1 {
     text-align: center;
-    color: #333;
+    margin-top: 20px;
 }
 
-#app {
-    display: flex;
-    flex-direction: column;
-    width: 90%;
-    max-width: 1400px;
-    background-color: #fff;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-}
-
-/* JSON Upload Container */
-#jsonUploadContainer {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-}
-
-#jsonUploadContainer input,
-#jsonUploadContainer button {
-    margin: 0 5px;
-    padding: 8px 12px;
-    border-radius: 4px;
-}
-
-button {
-    background-color: #2196F3;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-button:hover {
-    background-color: #0b7dda;
-}
-
-/* Left Panel */
+/* Left panel with available components */
 #leftPanel {
-    float: left;
-    width: 25%;
-    max-width: 300px;
-    padding: 10px;
-    background-color: #f8f8f8;
-    border-right: 1px solid #ccc;
+    width: 200px;
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    background-color: #fff;
+    padding: 15px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
 }
 
 #componentButtons {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    margin-bottom: 20px;
 }
 
-/* Graph display */
-#mainGraphContainer {
-    float: right;
-    width: 75%;
+#addNewComponentButton {
+    width: 100%;
     padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
 }
 
-#scrollableContainer {
+#addNewComponentButton:hover {
+    background-color: #45a049;
+}
+
+/* Graph container */
+#mainGraphContainer {
+    margin-left: 240px; /* Space for the left panel */
+    padding: 20px;
+}
+
+/* Graph rendering area */
+#graph {
     width: 100%;
     height: 600px;
-    overflow: auto;
     border: 1px solid #ccc;
-    border-radius: 8px;
+    margin-bottom: 20px;
 }
 
-#graph {
-    width: 2000px;
-    height: 1500px;
-    background-color: #fff;
+/* Export and download buttons */
+button {
+    padding: 10px;
+    margin-right: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
 }
 
-/* Component Popup */
+#exportButton {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#downloadGraphButton {
+    background-color: #008CBA;
+    color: white;
+}
+
+#copyJsonButton {
+    background-color: #f39c12;
+    color: white;
+}
+
+/* Add Component Popup */
 #addComponentPopup {
-    display: none;
     position: fixed;
-    left: 50%;
     top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
-    background: #fff;
+    background-color: white;
     padding: 20px;
-    border: 2px solid #ccc;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    width: 300px;
+    display: none;
+}
+
+#addComponentPopup.hidden {
+    display: none;
+}
+
+#addComponentPopup label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
 }
 
 #addComponentPopup input {
     width: 100%;
     padding: 8px;
-    margin: 5px 0;
-    border-radius: 4px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
 }
 
+#addComponentPopup button {
+    width: 48%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+#addComponentPopup button:hover {
+    background-color: #45a049;
+}
+
+#cancelAddComponentButton {
+    background-color: #f44336;
+}
+
+#cancelAddComponentButton:hover {
+    background-color: #e53935;
+}
+
+/* Hide the popup initially */
 .hidden {
     display: none;
 }
 
-/* SVG Node Styles */
-.node rect {
-    stroke: #333;
-    stroke-width: 1px;
+/* Delete button for each node */
+foreignObject {
+    display: block;
+    text-align: center;
+}
+
+foreignObject button {
+    padding: 5px 10px;
+    font-size: 12px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 5px;
     cursor: pointer;
 }
 
-.node text {
-    font-size: 12px;
-    fill: #fff;
-    pointer-events: none;
-    text-anchor: middle;
-    dominant-baseline: middle;
-}
-
-/* Link Styles */
-.link {
-    stroke-width: 2px;
-    marker-end: url(#arrowhead);
+foreignObject button:hover {
+    background-color: #e03e3e;
 }
