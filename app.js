@@ -1,15 +1,14 @@
-// Initialize workflow data
 let workflowData = {
     workflowTasks: []
 };
 
 // Add a new component (task) to the workflow
-function addComponent() {
-    // Open the popup for adding a new component
+document.getElementById("addNewComponentButton").addEventListener("click", () => {
+    // Show the popup to add a new component
     document.getElementById("addComponentPopup").classList.remove("hidden");
-}
+});
 
-// Add the component to the workflow and render
+// Add the component to the workflow and render the diagram
 document.getElementById("addComponentToGraphButton").addEventListener("click", () => {
     const name = document.getElementById("taskName").value;
     const type = document.getElementById("componentType").value;
@@ -17,7 +16,6 @@ document.getElementById("addComponentToGraphButton").addEventListener("click", (
     const nextSuccess = document.getElementById("nextSuccess").value.split(",").filter(n => n.trim() !== "");
     const nextFailure = document.getElementById("nextFailure").value.split(",").filter(n => n.trim() !== "");
 
-    // Task ID based on current tasks length
     const taskId = `task-${workflowData.workflowTasks.length + 1}`;
 
     const newTask = {
@@ -34,42 +32,42 @@ document.getElementById("addComponentToGraphButton").addEventListener("click", (
     renderGraph();
 });
 
-// Render the graph (workflow diagram) as a linked list
+// Close the popup
+document.getElementById("closePopupButton").addEventListener("click", () => {
+    document.getElementById("addComponentPopup").classList.add("hidden");
+});
+
+// Render the graph as a linked list (linear structure)
 function renderGraph() {
-    d3.select("#graph").html(""); // Clear existing graph
+    d3.select("#graph").html("");
 
-    const svg = d3.select("#graph").append("svg").attr("width", 1000).attr("height", 600);
+    const svg = d3.select("#graph").append("svg").attr("width", 1000).attr("height", 400);
 
-    const nodes = workflowData.workflowTasks.map(task => ({
+    const nodes = workflowData.workflowTasks.map((task, index) => ({
         id: task.taskId,
         type: task.type,
         name: task.name,
         prev: task.prev,
         nextOnSuccess: task.nextOnSuccess,
-        nextOnFailure: task.nextOnFailure
+        nextOnFailure: task.nextFailure,
+        x: 200 + (index * 150), 
+        y: 100
     }));
 
-    // Links for connections between tasks
     let links = [];
     nodes.forEach(task => {
         if (task.nextOnSuccess) {
             task.nextOnSuccess.forEach(n => {
-                links.push({ source: task.taskId, target: n, type: "success" });
+                links.push({ source: task.id, target: n, type: "success" });
             });
         }
         if (task.nextOnFailure) {
             task.nextOnFailure.forEach(n => {
-                links.push({ source: task.taskId, target: n, type: "failure" });
+                links.push({ source: task.id, target: n, type: "failure" });
             });
         }
     });
 
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(120))
-        .force("charge", d3.forceManyBody().strength(-400))
-        .force("center", d3.forceCenter(500, 300));
-
-    // Draw the connections (arrows between tasks)
     const link = svg.selectAll(".link")
         .data(links)
         .enter().append("line")
@@ -78,7 +76,6 @@ function renderGraph() {
         .attr("stroke-width", 2)
         .attr("marker-end", "url(#arrow)");
 
-    // Draw the nodes (tasks)
     const node = svg.selectAll(".node")
         .data(nodes)
         .enter().append("g")
@@ -103,7 +100,6 @@ function renderGraph() {
         .attr("fill", "white")
         .text(d => `${d.type} - ${d.id}`);
 
-    // Delete Button on each component
     node.append("foreignObject")
         .attr("width", 100)
         .attr("height", 30)
@@ -115,7 +111,6 @@ function renderGraph() {
             deleteComponent(d.id);
         });
 
-    // Arrow definition for connections
     svg.append("defs").append("marker")
         .attr("id", "arrow")
         .attr("viewBox", "0 -5 10 10")
@@ -161,24 +156,7 @@ function deleteComponent(taskId) {
     renderGraph();
 }
 
-// Initialize the add component button
-document.getElementById("addNewComponentButton").addEventListener("click", addComponent);
-
-// Load workflow JSON data from a file
-document.getElementById("jsonFileInput").addEventListener("change", event => {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            workflowData = JSON.parse(e.target.result);
-            renderGraph();
-        } catch (error) {
-            alert("Invalid JSON file!");
-        }
-    };
-    reader.readAsText(event.target.files[0]);
-});
-
-// Export workflow as JSON
+// Export the workflow as a JSON file
 document.getElementById("exportButton").addEventListener("click", () => {
     const json = JSON.stringify(workflowData, null, 2);
     const blob = new Blob([json], { type: "application/json" });
@@ -188,7 +166,7 @@ document.getElementById("exportButton").addEventListener("click", () => {
     link.click();
 });
 
-// Download the graph as SVG
+// Download the graph as an SVG file
 document.getElementById("downloadGraphButton").addEventListener("click", () => {
     const svg = document.querySelector("#graph svg");
     const serializer = new XMLSerializer();
