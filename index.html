@@ -3,56 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflow Diagram</title>
+    <title>Component Workflow Diagram</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Workflow Diagram Editor</h1>
+    <div id="container">
+        <div id="upload-area">
+            <h2>Upload Workflow</h2>
+            <input type="file" id="jsonFileInput" accept=".json" />
+        </div>
 
-    <!-- Left Panel for available components -->
-    <div id="leftPanel">
-        <div id="componentButtons">
+        <div id="component-area">
+            <h2>Add Components</h2>
             <button id="addNewComponentButton">Add New Component</button>
         </div>
 
-        <!-- Hidden Popup for adding new component -->
-        <div id="addComponentPopup" class="hidden">
-            <label for="taskName">Component Name:</label>
-            <input type="text" id="taskName" placeholder="Enter task name">
-
-            <label for="componentType">Component Type:</label>
-            <select id="componentType">
-                <option value="TypeA">TypeA</option>
-                <option value="TypeB">TypeB</option>
-                <option value="TypeC">TypeC</option>
-            </select>
-
-            <label for="prevTask">Previous Task ID (optional):</label>
-            <input type="text" id="prevTask" placeholder="Task ID">
-
-            <label for="nextSuccess">Next Task IDs on Success (comma separated):</label>
-            <input type="text" id="nextSuccess" placeholder="Task IDs">
-
-            <label for="nextFailure">Next Task IDs on Failure (comma separated):</label>
-            <input type="text" id="nextFailure" placeholder="Task IDs">
-
-            <button id="addComponentToGraphButton">Add Component</button>
-            <button id="cancelAddComponentButton">Cancel</button>
+        <div id="display-area">
+            <h2>Workflow Diagram</h2>
+            <div id="graph"></div>
         </div>
 
-        <hr>
-
-        <div>
-            <input type="file" id="jsonFileInput" accept=".json">
+        <div id="action-area">
+            <h2>Actions</h2>
             <button id="exportButton">Export Workflow</button>
             <button id="downloadGraphButton">Download Graph as SVG</button>
             <button id="copyJsonButton">Copy JSON to Clipboard</button>
         </div>
     </div>
 
-    <!-- Main Graph Area -->
-    <div id="mainGraphContainer">
-        <div id="graph"></div>
+    <!-- Popup for adding components -->
+    <div id="addComponentPopup" class="popup hidden">
+        <div class="popup-content">
+            <h3>Add Component</h3>
+            <label for="taskName">Task Name</label>
+            <input type="text" id="taskName" />
+            <label for="componentType">Component Type</label>
+            <input type="text" id="componentType" />
+            <label for="prevTask">Previous Task ID</label>
+            <input type="text" id="prevTask" />
+            <label for="nextSuccess">Next on Success</label>
+            <input type="text" id="nextSuccess" />
+            <label for="nextFailure">Next on Failure</label>
+            <input type="text" id="nextFailure" />
+            <button id="addComponentToGraphButton">Add Component</button>
+            <button id="closePopupButton">Close</button>
+        </div>
     </div>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
