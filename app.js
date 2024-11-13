@@ -53,6 +53,24 @@ function addNewComponentType() {
     }
 }
 
+function addComponent(type) {
+    const newTask = {
+        taskId: `task${workflowData.workflowTasks.length + 1}`,
+        type: type,
+        name: `New ${type}`,
+        prev: null,
+        nextOnSuccess: [],
+        nextOnFailure: []
+    };
+    workflowData.workflowTasks.push(newTask);
+    renderGraph();
+}
+
+function deleteComponent(taskId) {
+    workflowData.workflowTasks = workflowData.workflowTasks.filter(task => task.taskId !== taskId);
+    renderGraph();
+}
+
 function renderGraph() {
     d3.select("#graph").html("");
     const svg = d3.select("#graph").append("svg").attr("width", "2000px").attr("height", "1500px");
@@ -86,8 +104,7 @@ function renderGraph() {
         }
     });
 
-    // Define nodes in a grid for structured layout
-    let x = 100, y = 50, row = 0;
+    let x = 100, y = 50;
     nodes.forEach(node => {
         node.fx = x;
         node.fy = y;
@@ -102,8 +119,7 @@ function renderGraph() {
         .data(links)
         .enter().append("line")
         .attr("class", "link")
-        .attr("stroke", d => d.type === "success" ? "green" : "red")
-        .attr("stroke-width", 2);
+        .attr("stroke", d => d.type === "success" ? "green" : "red");
 
     const node = svg.selectAll(".node")
         .data(nodes)
@@ -112,18 +128,25 @@ function renderGraph() {
 
     node.append("rect")
         .attr("width", 120)
-        .attr("height", 40)
+        .attr("height", 50)
         .attr("x", -60)
-        .attr("y", -20)
+        .attr("y", -25)
         .attr("rx", 6)
         .attr("ry", 6)
-        .attr("fill", "steelblue");
+        .attr("fill", "steelblue")
+        .on("click", (e, d) => deleteComponent(d.id));
 
     node.append("text")
-        .attr("dy", ".35em")
+        .attr("class", "title")
+        .attr("y", -5)
         .attr("text-anchor", "middle")
-        .attr("fill", "white")
-        .text(d => `${d.name} (${d.type})`);
+        .text(d => d.type);
+
+    node.append("text")
+        .attr("class", "subtitle")
+        .attr("y", 15)
+        .attr("text-anchor", "middle")
+        .text(d => d.id);
 
     node.attr("transform", d => `translate(${d.fx},${d.fy})`);
 
@@ -157,6 +180,8 @@ function downloadGraph() {
 }
 
 function copyWorkflowJSON() {
-    navigator.clipboard.writeText(JSON.stringify(workflowData, null, 2))
-        .then(() => alert("Workflow JSON copied to clipboard"));
+    navigator.clipboard.writeText(JSON.stringify(workflowData, null, 2)).then(
+        () => alert("Workflow JSON copied to clipboard."),
+        err => alert("Failed to copy JSON.")
+    );
 }
