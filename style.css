@@ -1,22 +1,112 @@
-#newComponentContainer {
-    margin-top: 20px;
+/* General Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+/* Component Panel */
+#componentPanel {
+    margin-bottom: 20px;
 }
 
 #newComponentInput {
-    width: calc(100% - 80px);
     padding: 8px;
-    margin-right: 5px;
+    margin-right: 10px;
+    width: 200px;
 }
 
 #addNewComponentButton {
-    padding: 8px;
-    background-color: #28a745;
+    padding: 8px 16px;
+}
+
+#componentButtons {
+    margin-top: 20px;
+}
+
+/* Component Buttons */
+.component-button {
+    padding: 8px 16px;
+    margin: 5px;
+    cursor: pointer;
+    background-color: #3b8e8d;
     color: white;
     border: none;
-    cursor: pointer;
     border-radius: 5px;
 }
 
-#addNewComponentButton:hover {
-    background-color: #218838;
+.component-button:hover {
+    background-color: #2a6f6a;
+}
+
+/* Graph Container */
+#graphWrapper {
+    margin-top: 40px;
+    position: relative;
+    height: 600px;
+    overflow: auto;
+}
+
+#graph {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Node Styling */
+.node rect {
+    width: 120px;
+    height: 40px;
+    fill: #3b8e8d;
+    rx: 6;
+    ry: 6;
+    cursor: pointer;
+}
+
+.node rect:hover {
+    fill: #2a6f6a;
+}
+
+.node text {
+    font-size: 14px;
+    fill: white;
+}
+
+/* Delete Button */
+.delete-button {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.delete-button:hover {
+    background-color: darkred;
+}
+
+/* Action Buttons */
+#actionButtons {
+    margin-top: 20px;
+}
+
+#actionButtons button {
+    padding: 10px 20px;
+    margin: 5px;
+    cursor: pointer;
+    background-color: #3b8e8d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+#actionButtons button:hover {
+    background-color: #2a6f6a;
+}
+
+/* File Input Section */
+#jsonFileInput {
+    margin-top: 20px;
 }
