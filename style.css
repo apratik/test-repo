@@ -1,3 +1,4 @@
+/* General styles */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -5,10 +6,36 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    background-color: #f4f4f9;
 }
 
-#toolbar {
-    margin: 10px;
+h1 {
+    margin-top: 20px;
+    color: #333;
+}
+
+#app {
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+#componentPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#componentPanel h3 {
+    margin-bottom: 10px;
+    color: #333;
 }
 
 #componentButtons {
@@ -18,36 +45,110 @@ body {
     margin-bottom: 10px;
 }
 
-.component-button {
-    padding: 5px 10px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: white;
+#componentButtons .component-button {
+    padding: 8px 12px;
+    background-color: #4CAF50;
+    color: #fff;
     border: none;
-    border-radius: 3px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
+#componentButtons .component-button:hover {
+    background-color: #45a049;
+}
+
+#newComponentInput {
+    padding: 5px;
+    width: 180px;
+    margin-right: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+#addNewComponentButton {
+    padding: 8px 12px;
+    background-color: #2196F3;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#addNewComponentButton:hover {
+    background-color: #0b7dda;
+}
+
+button {
+    margin: 5px;
+    padding: 8px 12px;
+    background-color: #2196F3;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #0b7dda;
+}
+
+/* Scrollable container for graph */
 #scrollableContainer {
     width: 100%;
-    height: 600px; /* Adjust height as needed */
-    overflow: auto; /* Enable scroll */
+    height: 600px;
+    overflow: auto;
     border: 1px solid #ccc;
-    margin: 10px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    padding: 10px;
 }
 
 #graph {
-    width: 2000px; /* Large width to allow scrolling */
-    height: 1500px; /* Large height to allow scrolling */
+    width: 2000px;
+    height: 1500px;
+    background-color: #fff;
 }
 
+/* SVG node styles */
 .node rect {
-    fill: #4CAF50;
+    fill: #007bff;
     stroke: #333;
-    stroke-width: 1.5px;
+    stroke-width: 1px;
+    cursor: pointer;
+}
+
+.node rect:hover {
+    fill: #0056b3;
 }
 
 .node text {
     font-size: 12px;
-    fill: white;
+    fill: #fff;
     pointer-events: none;
+}
+
+.node .title {
+    font-weight: bold;
+}
+
+.node .subtitle {
+    font-size: 10px;
+    fill: #ccc;
+}
+
+/* Link styles */
+.link {
+    stroke-width: 2px;
+}
+
+.link[stroke="green"] {
+    stroke: green;
+}
+
+.link[stroke="red"] {
+    stroke: red;
 }
