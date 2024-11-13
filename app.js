@@ -85,10 +85,7 @@ function renderGraph() {
         }
     });
 
-    const layout = d3.layout.tree()
-        .size([800, 600])
-        .separation(function(a, b) { return a.parent === b.parent ? 1 : 3; });
-
+    // Build a tree structure to organize nodes hierarchically
     const root = { name: 'root', children: [] };
     const nodeMap = {};
 
@@ -101,8 +98,10 @@ function renderGraph() {
         (newNode.parent.children || (newNode.parent.children = [])).push(newNode);
     });
 
-    const nodesData = layout.nodes(root);
-    const linksData = layout.links(nodesData);
+    const treeLayout = d3.tree().size([800, 600]).separation(function(a, b) { return a.parent === b.parent ? 1 : 3; });
+
+    const nodesData = treeLayout(root).descendants();  // Use d3.tree() for hierarchical layout
+    const linksData = treeLayout(root).links();  // Use d3.tree() for hierarchical links
 
     const link = svg.selectAll(".link")
         .data(linksData)
