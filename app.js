@@ -61,8 +61,9 @@ function renderGraph() {
         id: task.taskId,
         type: task.type,
         name: task.name,
-        isStart: task.prev === null,         // Identify start node
-        isEnd: !task.nextOnSuccess && !task.nextOnFailure // Identify end node
+        prev: task.prev,
+        nextOnSuccess: task.nextOnSuccess,
+        nextOnFailure: task.nextOnFailure
     }));
 
     links = [];
@@ -98,6 +99,7 @@ function renderGraph() {
         (newNode.parent.children || (newNode.parent.children = [])).push(newNode);
     });
 
+    // Using d3.tree() for hierarchical layout
     const treeLayout = d3.tree().size([800, 600]).separation(function(a, b) { return a.parent === b.parent ? 1 : 3; });
 
     const nodesData = treeLayout(root).descendants();  // Use d3.tree() for hierarchical layout
