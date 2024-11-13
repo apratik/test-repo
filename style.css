@@ -44,7 +44,7 @@ h1 {
 
 /* Graph container */
 #mainGraphContainer {
-    margin-left: 240px; /* Space for the left panel */
+    margin-left: 240px;
     padding: 20px;
 }
 
