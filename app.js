@@ -64,49 +64,25 @@ document.addEventListener("DOMContentLoaded", function () {
         d3.select("#graph").html("");
         const svg = d3.select("#graph").append("svg").attr("width", 800).attr("height", 600);
 
-        nodes = workflowData.workflowTasks.map(task => ({
-            id: task.taskId,
-            type: task.type,
-            name: task.name,
-            isStart: task.prev === null, // Identify start node
-            isEnd: !task.nextOnSuccess && !task.nextOnFailure, // Identify end node
-        }));
+        // Build the hierarchy from the workflowData
+        const root = d3.stratify()
+            .id(d => d.taskId)
+            .parentId(d => d.prev)(workflowData.workflowTasks);
 
-        links = [];
-        const taskIds = new Set(nodes.map(node => node.id));
-
-        workflowData.workflowTasks.forEach(task => {
-            if (task.nextOnSuccess) {
-                task.nextOnSuccess.forEach(n => {
-                    if (taskIds.has(n)) {
-                        links.push({ source: task.taskId, target: n, type: "success" });
-                    }
-                });
-            }
-            if (task.nextOnFailure) {
-                task.nextOnFailure.forEach(n => {
-                    if (taskIds.has(n)) {
-                        links.push({ source: task.taskId, target: n, type: "failure" });
-                    }
-                });
-            }
-        });
-
-        // Using D3's tree layout for a more structured flowchart
         const treeLayout = d3.tree().size([700, 400]);
-
-        const root = d3.hierarchy({ children: nodes });
         treeLayout(root);
 
+        // Links (arrows between nodes)
         const link = svg.selectAll(".link")
-            .data(links)
+            .data(root.links())
             .enter().append("line")
             .attr("class", "link")
             .attr("stroke", d => d.type === "success" ? "green" : "red")
             .attr("stroke-width", 2);
 
+        // Nodes (task components)
         const node = svg.selectAll(".node")
-            .data(nodes)
+            .data(root.descendants())
             .enter().append("g")
             .attr("class", "node")
             .attr("transform", d => `translate(${d.x},${d.y})`)
@@ -117,13 +93,13 @@ document.addEventListener("DOMContentLoaded", function () {
             .attr("height", 40)
             .attr("rx", 6)
             .attr("ry", 6)
-            .attr("fill", d => d.isStart ? "blue" : d.isEnd ? "darkred" : "#3b8e8d");
+            .attr("fill", d => d.parent === null ? "blue" : (d.children ? "#3b8e8d" : "darkred"));
 
         node.append("text")
             .attr("dy", ".35em")
             .attr("text-anchor", "middle")
             .attr("fill", "white")
-            .text(d => `${d.name} (${d.type})`);
+            .text(d => `${d.data.name} (${d.data.type})`);
 
         node.append("foreignObject")
             .attr("x", 50)
@@ -135,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .attr("class", "delete-button")
             .on("click", (event, d) => deleteNode(d));
 
-        // Add links (arrows) between nodes
+        // Links (arrows) between nodes
         links.forEach(function (link) {
             svg.append("line")
                 .attr("x1", link.source.x)
