@@ -6,11 +6,11 @@ document.getElementById('jsonFileInput').addEventListener('change', handleFileUp
 function handleFileUpload(event) {
     const reader = new FileReader();
 
-    reader.onload = function() {
+    reader.onload = function () {
         try {
             // Parse the JSON and handle any errors
             workflowData = JSON.parse(reader.result);
-            populateComponentPanel(workflowData.workflowTasks); // Proceed with using the parsed JSON
+            populateComponentPanel(workflowData.workflowTasks); // Populate component panel
             renderGraph(workflowData.workflowTasks); // Render the graph after loading
         } catch (e) {
             console.error("Invalid JSON format", e);
@@ -18,7 +18,7 @@ function handleFileUpload(event) {
         }
     };
 
-    reader.onerror = function() {
+    reader.onerror = function () {
         alert("Error reading the file. Please try again.");
     };
 
@@ -33,7 +33,7 @@ function populateComponentPanel(data) {
 
     data.forEach(component => {
         const button = document.createElement('button');
-        button.innerText = `${component.type} - ${component.taskId}`;
+        button.innerText = component.type; // Use type as the label
         button.addEventListener('click', () => {
             alert(`Component Type: ${component.type}\nTask ID: ${component.taskId}`);
         });
@@ -50,11 +50,12 @@ function renderGraph(data) {
     // Set up the color scale for component types
     const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
-    // Define nodes and links for D3
-    const nodes = data.map((d, index) => ({
+    // Define nodes for D3 with taskId, type, and other properties
+    const nodes = data.map(d => ({
         id: d.taskId,
         type: d.type,
-        taskId: d.taskId,
+        name: d.type, // Set name as type inside the box
+        taskId: d.taskId, // Add taskId for reference
         x: Math.random() * width,
         y: Math.random() * height,
     }));
@@ -66,29 +67,35 @@ function renderGraph(data) {
     // Create links based on prev, nextOnSuccess, and nextOnFailure
     const links = [];
     data.forEach(d => {
-        if (d.prev) {
+        if (d.prev && taskIdToNode[d.prev]) {
             links.push({
                 source: taskIdToNode[d.prev],
                 target: taskIdToNode[d.taskId],
                 label: 'Prev',
             });
         }
-        if (d.nextOnSuccess) {
+
+        if (d.nextOnSuccess && Array.isArray(d.nextOnSuccess)) {
             d.nextOnSuccess.forEach(nextTask => {
-                links.push({
-                    source: taskIdToNode[d.taskId],
-                    target: taskIdToNode[nextTask],
-                    label: 'Success',
-                });
+                if (taskIdToNode[nextTask]) {
+                    links.push({
+                        source: taskIdToNode[d.taskId],
+                        target: taskIdToNode[nextTask],
+                        label: 'Success',
+                    });
+                }
             });
         }
-        if (d.nextOnFailure) {
+
+        if (d.nextOnFailure && Array.isArray(d.nextOnFailure)) {
             d.nextOnFailure.forEach(nextTask => {
-                links.push({
-                    source: taskIdToNode[d.taskId],
-                    target: taskIdToNode[nextTask],
-                    label: 'Failure',
-                });
+                if (taskIdToNode[nextTask]) {
+                    links.push({
+                        source: taskIdToNode[d.taskId],
+                        target: taskIdToNode[nextTask],
+                        label: 'Failure',
+                    });
+                }
             });
         }
     });
@@ -117,18 +124,28 @@ function renderGraph(data) {
             .on("drag", dragged)
             .on("end", dragended));
 
+    // Rectangles for nodes (boxes)
     node.append("rect")
         .attr("width", 120)
-        .attr("height", 40)
+        .attr("height", 60)
         .attr("rx", 10)
         .attr("ry", 10)
         .style("fill", d => colorScale(d.type));
 
+    // Add text inside the box (component type)
     node.append("text")
         .attr("dx", 60)
         .attr("dy", 25)
         .attr("text-anchor", "middle")
-        .text(d => d.taskId);
+        .text(d => d.name); // Component name as type
+
+    // Add task ID underneath the box
+    node.append("text")
+        .attr("dx", 60)
+        .attr("dy", 45)
+        .attr("text-anchor", "middle")
+        .style("font-size", "12px")
+        .text(d => d.taskId); // Task ID below the component name
 
     // Update the positions of the nodes and links during the simulation
     simulation.on("tick", () => {
