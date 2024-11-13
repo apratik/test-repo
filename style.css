@@ -1,114 +1,70 @@
-/* Basic reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    align-items: flex-start;
     height: 100vh;
     margin: 0;
+    background-color: #f4f4f9;
 }
 
 .container {
     display: flex;
+    justify-content: space-between;
     width: 100%;
-    height: 100%;
+    height: 80%;
 }
 
-.sidebar {
-    width: 300px;
-    background-color: #3b8e8d;
+#componentPanel {
+    width: 250px;
     padding: 20px;
-    color: white;
-    height: 100vh;
-    overflow-y: auto;
-}
-
-.sidebar h3 {
-    margin-bottom: 20px;
+    background-color: #fff;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    margin-right: 20px;
+    border-radius: 8px;
 }
 
 #componentButtons {
-    margin-bottom: 20px;
+    margin-top: 20px;
 }
 
 button {
-    background-color: #5c8e8d;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    margin: 5px 0;
+    padding: 10px;
+    margin: 10px 0;
+    width: 100%;
     cursor: pointer;
-    border-radius: 4px;
+    background-color: #3b8e8d;
+    border: none;
+    color: white;
+    border-radius: 5px;
 }
 
 button:hover {
-    background-color: #3b6f6e;
-}
-
-input[type="text"] {
-    width: calc(100% - 20px);
-    padding: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.main-content {
-    flex: 1;
-    padding: 20px;
-    overflow: auto;
+    background-color: #45a29e;
 }
 
 #graph {
+    width: 80%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#actionButtons {
+    display: flex;
+    justify-content: space-around;
     width: 100%;
-    height: 600px;
-    border: 2px solid #ddd;
-    background-color: white;
+    margin-top: 20px;
 }
 
-.delete-button {
-    background-color: red;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
+.node rect {
     cursor: pointer;
-    font-size: 12px;
 }
 
-.delete-button:hover {
-    background-color: darkred;
+.node text {
+    font-size: 14px;
 }
 
-#jsonFileInput {
-    margin-bottom: 20px;
-}
-
-h2 {
-    margin-bottom: 20px;
-    color: #333;
-}
-
-button {
-    margin-right: 10px;
-}
-
-button:active {
-    transform: scale(0.98);
-}
-
-button:focus {
-    outline: none;
-}
-
-svg {
-    border: 1px solid #ccc;
+.link {
+    stroke-width: 2px;
 }
