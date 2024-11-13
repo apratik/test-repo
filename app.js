@@ -59,11 +59,34 @@ function renderGraph() {
     }));
 
     // Ensure links are created correctly
-    links = workflowData.workflowTasks.flatMap(task => [
-        ...(task.prev ? [{ source: task.prev, target: task.taskId }] : []), // prev is null means start
-        ...(task.nextOnSuccess && task.nextOnSuccess.length > 0 ? task.nextOnSuccess.map(next => ({ source: task.taskId, target: next })) : []), // nextOnSuccess null means end
-        ...(task.nextOnFailure && task.nextOnFailure.length > 0 ? task.nextOnFailure.map(next => ({ source: task.taskId, target: next })) : []) // nextOnFailure null means end
-    ]);
+    links = [];
+
+    workflowData.workflowTasks.forEach(task => {
+        if (task.prev) {
+            const prevNode = nodes.find(node => node.id === task.prev);
+            if (prevNode) {
+                links.push({ source: prevNode, target: task.taskId });
+            }
+        }
+
+        if (task.nextOnSuccess && task.nextOnSuccess.length > 0) {
+            task.nextOnSuccess.forEach(nextTaskId => {
+                const nextNode = nodes.find(node => node.id === nextTaskId);
+                if (nextNode) {
+                    links.push({ source: task.taskId, target: nextNode });
+                }
+            });
+        }
+
+        if (task.nextOnFailure && task.nextOnFailure.length > 0) {
+            task.nextOnFailure.forEach(nextTaskId => {
+                const nextNode = nodes.find(node => node.id === nextTaskId);
+                if (nextNode) {
+                    links.push({ source: task.taskId, target: nextNode });
+                }
+            });
+        }
+    });
 
     // Check if nodes and links are correct before proceeding
     if (nodes.length === 0 || links.length === 0) {
