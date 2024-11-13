@@ -54,8 +54,8 @@ function addNewComponentType() {
 }
 
 function renderGraph() {
-    d3.select("#graph").html(""); // Clear previous graph
-    const svg = d3.select("#graph").append("svg").attr("width", 1000).attr("height", 200);
+    d3.select("#graph").html("");
+    const svg = d3.select("#graph").append("svg").attr("width", "2000px").attr("height", "1500px");
 
     nodes = workflowData.workflowTasks.map(task => ({
         id: task.taskId,
@@ -86,110 +86,77 @@ function renderGraph() {
         }
     });
 
-    // Set node positions for a horizontal layout
-    let xPosition = 50;
-    nodes.forEach((node, i) => {
-        node.x = xPosition;
-        node.y = 100;
-        xPosition += 150; // Adjust the horizontal spacing between nodes
+    // Define nodes in a grid for structured layout
+    let x = 100, y = 50, row = 0;
+    nodes.forEach(node => {
+        node.fx = x;
+        node.fy = y;
+        x += 200;
+        if (x > 1800) {
+            x = 100;
+            y += 150;
+        }
     });
 
-    // Create links (arrows between tasks)
     const link = svg.selectAll(".link")
         .data(links)
         .enter().append("line")
         .attr("class", "link")
-        .attr("x1", d => getNodeById(d.source).x + 60)
-        .attr("y1", d => getNodeById(d.source).y)
-        .attr("x2", d => getNodeById(d.target).x - 60)
-        .attr("y2", d => getNodeById(d.target).y)
         .attr("stroke", d => d.type === "success" ? "green" : "red")
         .attr("stroke-width", 2);
 
-    // Create nodes (rectangles)
     const node = svg.selectAll(".node")
         .data(nodes)
         .enter().append("g")
-        .attr("class", "node")
-        .attr("transform", d => `translate(${d.x}, ${d.y})`);
+        .attr("class", "node");
 
     node.append("rect")
         .attr("width", 120)
         .attr("height", 40)
+        .attr("x", -60)
+        .attr("y", -20)
         .attr("rx", 6)
         .attr("ry", 6)
-        .attr("fill", d => {
-            if (d.prev === null) return "blue"; // Start node
-            return "#3b8e8d"; // Regular task node
-        });
+        .attr("fill", "steelblue");
 
     node.append("text")
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
         .attr("fill", "white")
-        .text(d => `${d.name}`);
+        .text(d => `${d.name} (${d.type})`);
 
-    function getNodeById(id) {
-        return nodes.find(node => node.id === id);
-    }
-}
+    node.attr("transform", d => `translate(${d.fx},${d.fy})`);
 
-function addComponent(type) {
-    const newId = `task_${nodes.length + 1}`;
-    const newNode = { 
-        id: newId, 
-        type: type, 
-        name: type,  // Assign a default name or modify as needed
-        prev: null, 
-        nextOnSuccess: [], 
-        nextOnFailure: [] 
-    };
-
-    // If there are existing tasks, we can set the prev and next properties
-    if (nodes.length > 0) {
-        const lastNode = nodes[nodes.length - 1]; // Get the last node
-        lastNode.nextOnSuccess.push(newId); // Link the new task to the last node
-        newNode.prev = lastNode.id; // Set the new node's prev property
-    }
-
-    // Add the new node to the workflow data
-    workflowData.workflowTasks.push({ taskId: newId, type: type, prev: null, nextOnSuccess: [], nextOnFailure: [] });
-    
-    // Add the new node to the nodes array
-    nodes.push(newNode);
-    
-    // Re-render the graph after adding the new component
-    renderGraph();
+    link.attr("x1", d => nodes.find(node => node.id === d.source).fx)
+        .attr("y1", d => nodes.find(node => node.id === d.source).fy)
+        .attr("x2", d => nodes.find(node => node.id === d.target).fx)
+        .attr("y2", d => nodes.find(node => node.id === d.target).fy);
 }
 
 function exportWorkflow() {
-    const dataStr = JSON.stringify(workflowData, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(workflowData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "workflow.json";
+    a.download = "updated_workflow.json";
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
-}
-
-function copyWorkflowJSON() {
-    const dataStr = JSON.stringify(workflowData, null, 2);
-    navigator.clipboard.writeText(dataStr).then(() => {
-        alert("Workflow copied to clipboard!");
-    });
+    document.body.removeChild(a);
 }
 
 function downloadGraph() {
-    const svg = document.querySelector("#graph svg");
-    const serializer = new XMLSerializer();
-    const source = serializer.serializeToString(svg);
-
-    const svgBlob = new Blob([source], { type: "image/svg+xml" });
+    const svgData = new XMLSerializer().serializeToString(d3.select("svg").node());
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(svgBlob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "workflow.svg";
+    a.download = "workflow_visualization.svg";
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+function copyWorkflowJSON() {
+    navigator.clipboard.writeText(JSON.stringify(workflowData, null, 2))
+        .then(() => alert("Workflow JSON copied to clipboard"));
 }
