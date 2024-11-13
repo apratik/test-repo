@@ -87,31 +87,6 @@ button:hover {
     background-color: #fff;
 }
 
-/* Component Popup */
-#addComponentPopup {
-    display: none;
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    background: #fff;
-    padding: 20px;
-    border: 2px solid #ccc;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-}
-
-#addComponentPopup input {
-    width: 100%;
-    padding: 8px;
-    margin: 5px 0;
-    border-radius: 4px;
-}
-
-.hidden {
-    display: none;
-}
-
 /* SVG Node Styles */
 .node rect {
     stroke: #333;
@@ -131,4 +106,22 @@ button:hover {
 .link {
     stroke-width: 2px;
     marker-end: url(#arrowhead);
+}
+
+/* Export Popup */
+#exportPopup {
+    display: none;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 20px;
+    border: 2px solid #ccc;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.hidden {
+    display: none;
 }
