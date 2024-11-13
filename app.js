@@ -1,15 +1,13 @@
-// Event listeners for buttons
 document.getElementById("jsonFileInput").addEventListener("change", handleFileUpload);
 document.getElementById("exportButton").addEventListener("click", exportWorkflow);
 document.getElementById("downloadGraphButton").addEventListener("click", downloadGraph);
 document.getElementById("copyJsonButton").addEventListener("click", copyWorkflowJSON);
 document.getElementById("addNewComponentButton").addEventListener("click", addNewComponentType);
 
-let workflowData = { WorkflowTasks: [] };
+let workflowData = { workflowTasks: [] };
 let nodes = [];
 let links = [];
 
-// Handle JSON file upload
 function handleFileUpload(event) {
     const file = event.target.files[0];
     if (file) {
@@ -23,21 +21,18 @@ function handleFileUpload(event) {
     }
 }
 
-// Generate component panel buttons from unique types in workflow
 function generateComponentPanel() {
-    const uniqueTypes = Array.from(new Set(workflowData.WorkflowTasks.map(task => task.type)));
+    const uniqueTypes = Array.from(new Set(workflowData.workflowTasks.map(task => task.type)));
     const componentButtons = document.getElementById("componentButtons");
-    componentButtons.innerHTML = ""; // Clear existing buttons
+    componentButtons.innerHTML = ""; 
 
     uniqueTypes.forEach(type => {
         createComponentButton(type);
     });
 }
 
-// Create a button for a given component type and add it to the panel
 function createComponentButton(type) {
     const componentButtons = document.getElementById("componentButtons");
-
     const btn = document.createElement("button");
     btn.className = "component-button";
     btn.textContent = type;
@@ -45,12 +40,10 @@ function createComponentButton(type) {
     componentButtons.appendChild(btn);
 }
 
-// Add a new component type to the panel
 function addNewComponentType() {
     const newTypeInput = document.getElementById("newComponentInput");
     const newType = newTypeInput.value.trim();
-
-    if (newType && !workflowData.WorkflowTasks.some(task => task.type === newType)) {
+    if (newType && !workflowData.workflowTasks.some(task => task.type === newType)) {
         createComponentButton(newType);
         newTypeInput.value = "";
     } else {
@@ -58,16 +51,24 @@ function addNewComponentType() {
     }
 }
 
-// Render the graph using D3
 function renderGraph() {
     d3.select("#graph").html("");
     const svg = d3.select("#graph").append("svg").attr("width", 800).attr("height", 600);
+    nodes = workflowData.workflowTasks.map(task => ({
+        id: task.taskId,
+        type: task.type,
+        name: task.name,
+        description: task.description
+    }));
 
-    nodes = workflowData.WorkflowTasks.map(task => ({ id: task.taskId, type: task.type }));
     links = [];
-    workflowData.WorkflowTasks.forEach(task => {
-        if (task.nextOnSuccess) task.nextOnSuccess.forEach(n => links.push({ source: task.taskId, target: n, type: "success" }));
-        if (task.nextOnFailure) task.nextOnFailure.forEach(n => links.push({ source: task.taskId, target: n, type: "failure" }));
+    workflowData.workflowTasks.forEach(task => {
+        if (task.nextOnSuccess) {
+            task.nextOnSuccess.forEach(n => links.push({ source: task.taskId, target: n, type: "success" }));
+        }
+        if (task.nextOnFailure) {
+            task.nextOnFailure.forEach(n => links.push({ source: task.taskId, target: n, type: "failure" }));
+        }
     });
 
     const simulation = d3.forceSimulation(nodes)
@@ -92,14 +93,16 @@ function renderGraph() {
             .on("end", dragended));
 
     node.append("rect")
-        .attr("width", 100)
-        .attr("height", 40)
-        .attr("x", -50)
-        .attr("y", -20);
+        .attr("width", 120)
+        .attr("height", 60)
+        .attr("x", -60)
+        .attr("y", -30)
+        .style("fill", "#ccc");
 
     node.append("text")
         .attr("dy", ".35em")
-        .text(d => `${d.id} (${d.type})`);
+        .text(d => `${d.name} (${d.type})`)
+        .attr("text-anchor", "middle");
 
     simulation.on("tick", () => {
         link.attr("x1", d => d.source.x)
@@ -128,15 +131,13 @@ function renderGraph() {
     }
 }
 
-// Add new component to the graph
 function addComponent(type) {
     const newId = `task_${nodes.length + 1}`;
-    workflowData.WorkflowTasks.push({ taskId: newId, type: type, nextOnSuccess: [], nextOnFailure: [] });
-    nodes.push({ id: newId, type: type });
+    workflowData.workflowTasks.push({ taskId: newId, type: type, prev: [], nextOnSuccess: [], nextOnFailure: [] });
+    nodes.push({ id: newId, type: type, name: `New ${type}` });
     renderGraph();
 }
 
-// Export workflow as JSON
 function exportWorkflow() {
     const blob = new Blob([JSON.stringify(workflowData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -148,7 +149,6 @@ function exportWorkflow() {
     document.body.removeChild(a);
 }
 
-// Download visualization as an SVG image
 function downloadGraph() {
     const svgData = new XMLSerializer().serializeToString(d3.select("svg").node());
     const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
@@ -161,7 +161,6 @@ function downloadGraph() {
     document.body.removeChild(a);
 }
 
-// Copy JSON to clipboard
 function copyWorkflowJSON() {
     navigator.clipboard.writeText(JSON.stringify(workflowData, null, 2))
         .then(() => alert("Workflow JSON copied to clipboard"));
