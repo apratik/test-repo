@@ -3,38 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Workflow Visualizer</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Workflow Visualization</title>
+    <style>
+        /* Your existing CSS for styling */
+    </style>
 </head>
 <body>
-    <h1>Interactive Workflow Visualizer</h1>
+    <!-- File input for uploading JSON -->
+    <input type="file" id="jsonFileInput" accept=".json" />
 
-    <div id="container">
-        <!-- File upload section -->
-        <input type="file" id="jsonFileInput" accept=".json">
-        
-        <!-- Component Panel -->
-        <div id="panel">
-            <h2>Components</h2>
-            <div id="componentButtons"></div>
-            
-            <!-- New Component Type Input -->
-            <div id="newComponentContainer">
-                <input type="text" id="newComponentInput" placeholder="New Component Type">
-                <button id="addNewComponentButton">Add Type</button>
-            </div>
-        </div>
-
-        <!-- Graph Area -->
-        <div id="graph"></div>
-    </div>
-
-    <!-- Action buttons -->
+    <!-- Buttons for various actions -->
     <button id="exportButton">Export JSON</button>
-    <button id="downloadGraphButton">Download Visualization</button>
+    <button id="downloadGraphButton">Download Graph</button>
     <button id="copyJsonButton">Copy JSON</button>
 
+    <!-- Panel for adding components -->
+    <div>
+        <div id="componentButtons"></div>
+        <input type="text" id="newComponentInput" placeholder="New component type">
+        <button id="addNewComponentButton">Add New Component Type</button>
+    </div>
+
+    <!-- Graph container -->
+    <div id="graph"></div>
+
+    <!-- Include D3.js and the main script file -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
