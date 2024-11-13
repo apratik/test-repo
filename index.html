@@ -4,66 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flowchart with D3.js</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://d3js.org/d3.v6.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        #componentButtons {
-            margin: 20px;
-            display: flex;
-            flex-wrap: wrap;
-        }
-        .component-button {
-            padding: 10px;
-            margin: 5px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .component-button:hover {
-            background-color: #45a049;
-        }
-        .task-panel {
-            width: 200px;
-            margin-top: 20px;
-        }
-        #graph {
-            margin-left: 250px;
-            position: relative;
-        }
-        .node rect {
-            cursor: pointer;
-        }
-        .link {
-            stroke-width: 2px;
-        }
-        .node text {
-            pointer-events: none;
-        }
-        .delete-button {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: red;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 50%;
-            padding: 5px;
-        }
-    </style>
 </head>
 <body>
-    <h1>Flowchart Editor</h1>
-    <div id="componentButtons"></div>
-    <div id="graph"></div>
-    <input type="file" id="jsonFileInput" accept=".json" />
-    <button id="exportButton">Export Workflow</button>
-    <button id="downloadGraphButton">Download Graph</button>
-    <button id="copyJsonButton">Copy JSON</button>
+    <div class="container">
+        <h1>Flowchart Editor</h1>
+        
+        <!-- Component Panel -->
+        <div id="componentPanel">
+            <input type="text" id="newComponentInput" placeholder="New Component Type" />
+            <button id="addNewComponentButton">Add New Component</button>
+            <div id="componentButtons"></div>
+        </div>
+
+        <!-- File upload section -->
+        <div>
+            <input type="file" id="jsonFileInput" accept=".json" />
+        </div>
+
+        <!-- Graph Rendering Section -->
+        <div id="graphWrapper">
+            <div id="graph"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div id="actionButtons">
+            <button id="exportButton">Export Workflow</button>
+            <button id="downloadGraphButton">Download Graph</button>
+            <button id="copyJsonButton">Copy JSON</button>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
