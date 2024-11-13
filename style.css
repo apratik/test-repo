@@ -3,91 +3,45 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     background-color: #f4f4f9;
+    display: flex;
+    justify-content: center;
 }
 
 h1 {
-    margin-top: 20px;
+    text-align: center;
     color: #333;
 }
 
 #app {
-    width: 100%;
-    max-width: 1200px;
-    padding: 20px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    width: 90%;
+    max-width: 1400px;
     background-color: #fff;
+    padding: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
 }
 
-#componentPanel {
+/* JSON Upload Container */
+#jsonUploadContainer {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
     margin-bottom: 20px;
 }
 
-#componentPanel h3 {
-    margin-bottom: 10px;
-    color: #333;
-}
-
-#componentButtons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-#componentButtons .component-button {
+#jsonUploadContainer input,
+#jsonUploadContainer button {
+    margin: 0 5px;
     padding: 8px 12px;
-    background-color: #4CAF50;
-    color: #fff;
-    border: none;
     border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#componentButtons .component-button:hover {
-    background-color: #45a049;
-}
-
-#newComponentInput {
-    padding: 5px;
-    width: 180px;
-    margin-right: 5px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-}
-
-#addNewComponentButton {
-    padding: 8px 12px;
-    background-color: #2196F3;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#addNewComponentButton:hover {
-    background-color: #0b7dda;
 }
 
 button {
-    margin: 5px;
-    padding: 8px 12px;
     background-color: #2196F3;
     color: #fff;
     border: none;
-    border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.2s;
 }
@@ -96,15 +50,35 @@ button:hover {
     background-color: #0b7dda;
 }
 
-/* Scrollable container for graph */
+/* Left Panel */
+#leftPanel {
+    float: left;
+    width: 25%;
+    max-width: 300px;
+    padding: 10px;
+    background-color: #f8f8f8;
+    border-right: 1px solid #ccc;
+}
+
+#componentButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Graph display */
+#mainGraphContainer {
+    float: right;
+    width: 75%;
+    padding: 10px;
+}
+
 #scrollableContainer {
     width: 100%;
     height: 600px;
     overflow: auto;
     border: 1px solid #ccc;
     border-radius: 8px;
-    background-color: #f9f9f9;
-    padding: 10px;
 }
 
 #graph {
@@ -113,42 +87,48 @@ button:hover {
     background-color: #fff;
 }
 
-/* SVG node styles */
+/* Component Popup */
+#addComponentPopup {
+    display: none;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 20px;
+    border: 2px solid #ccc;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+#addComponentPopup input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* SVG Node Styles */
 .node rect {
-    fill: #007bff;
     stroke: #333;
     stroke-width: 1px;
     cursor: pointer;
-}
-
-.node rect:hover {
-    fill: #0056b3;
 }
 
 .node text {
     font-size: 12px;
     fill: #fff;
     pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
 }
 
-.node .title {
-    font-weight: bold;
-}
-
-.node .subtitle {
-    font-size: 10px;
-    fill: #ccc;
-}
-
-/* Link styles */
+/* Link Styles */
 .link {
     stroke-width: 2px;
-}
-
-.link[stroke="green"] {
-    stroke: green;
-}
-
-.link[stroke="red"] {
-    stroke: red;
+    marker-end: url(#arrowhead);
 }
