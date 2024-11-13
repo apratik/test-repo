@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     let workflowData = { workflowTasks: [] };
     let nodes = [];
     let links = [];
@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Render the flowchart graph with D3.js
+    // Render the graph as a static flowchart
     function renderGraph() {
         d3.select("#graph").html("");
         const svg = d3.select("#graph").append("svg").attr("width", 800).attr("height", 600);
@@ -68,8 +68,8 @@ document.addEventListener("DOMContentLoaded", function() {
             id: task.taskId,
             type: task.type,
             name: task.name,
-            isStart: task.prev === null,         // Identify start node
-            isEnd: !task.nextOnSuccess && !task.nextOnFailure // Identify end node
+            isStart: task.prev === null, // Identify start node
+            isEnd: !task.nextOnSuccess && !task.nextOnFailure, // Identify end node
         }));
 
         links = [];
@@ -92,10 +92,11 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
 
-        const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id).distance(120))
-            .force("charge", d3.forceManyBody().strength(-400))
-            .force("center", d3.forceCenter(400, 300));
+        // Using D3's tree layout for a more structured flowchart
+        const treeLayout = d3.tree().size([700, 400]);
+
+        const root = d3.hierarchy({ children: nodes });
+        treeLayout(root);
 
         const link = svg.selectAll(".link")
             .data(links)
@@ -108,16 +109,12 @@ document.addEventListener("DOMContentLoaded", function() {
             .data(nodes)
             .enter().append("g")
             .attr("class", "node")
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended));
+            .attr("transform", d => `translate(${d.x},${d.y})`)
+            .on("click", (event, d) => deleteNode(d));
 
         node.append("rect")
             .attr("width", 120)
             .attr("height", 40)
-            .attr("x", -60)
-            .attr("y", -20)
             .attr("rx", 6)
             .attr("ry", 6)
             .attr("fill", d => d.isStart ? "blue" : d.isEnd ? "darkred" : "#3b8e8d");
@@ -138,31 +135,16 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("class", "delete-button")
             .on("click", (event, d) => deleteNode(d));
 
-        simulation.on("tick", () => {
-            link.attr("x1", d => d.source.x)
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y);
-
-            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        // Add links (arrows) between nodes
+        links.forEach(function (link) {
+            svg.append("line")
+                .attr("x1", link.source.x)
+                .attr("y1", link.source.y)
+                .attr("x2", link.target.x)
+                .attr("y2", link.target.y)
+                .attr("stroke", link.type === "success" ? "green" : "red")
+                .attr("stroke-width", 2);
         });
-
-        function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }
-
-        function dragged(event, d) {
-            d.fx = event.x;
-            d.fy = event.y;
-        }
-
-        function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        }
 
         // Delete node functionality
         function deleteNode(node) {
