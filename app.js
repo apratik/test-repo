@@ -85,22 +85,37 @@ function renderGraph() {
         }
     });
 
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(120))
-        .force("charge", d3.forceManyBody().strength(-400))
-        .force("center", d3.forceCenter(400, 300));
+    const layout = d3.layout.tree()
+        .size([800, 600])
+        .separation(function(a, b) { return a.parent === b.parent ? 1 : 3; });
+
+    const root = { name: 'root', children: [] };
+    const nodeMap = {};
+
+    nodes.forEach(node => {
+        nodeMap[node.id] = node;
+    });
+
+    nodes.forEach(node => {
+        const newNode = { name: node.name, id: node.id, parent: node.prev ? nodeMap[node.prev] : root };
+        (newNode.parent.children || (newNode.parent.children = [])).push(newNode);
+    });
+
+    const nodesData = layout.nodes(root);
+    const linksData = layout.links(nodesData);
 
     const link = svg.selectAll(".link")
-        .data(links)
+        .data(linksData)
         .enter().append("line")
         .attr("class", "link")
         .attr("stroke", d => d.type === "success" ? "green" : "red")
         .attr("stroke-width", 2);
 
     const node = svg.selectAll(".node")
-        .data(nodes)
+        .data(nodesData)
         .enter().append("g")
         .attr("class", "node")
+        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
@@ -115,8 +130,7 @@ function renderGraph() {
         .attr("ry", 6)
         .attr("fill", d => {
             // Special styling for start and end nodes
-            if (d.isStart) return "blue"; // Start node
-            if (d.isEnd) return "darkred"; // End node
+            if (d.id === "root") return "blue"; // Start node
             return "#3b8e8d"; // Regular middle nodes
         });
 
@@ -124,16 +138,7 @@ function renderGraph() {
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
         .attr("fill", "white")
-        .text(d => `${d.name} (${d.type})`);
-
-    simulation.on("tick", () => {
-        link.attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
-
-        node.attr("transform", d => `translate(${d.x},${d.y})`);
-    });
+        .text(d => `${d.name}`);
 
     function dragstarted(event, d) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
