@@ -59,48 +59,73 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Render the graph as a static flowchart
+    // Render the graph as a force-directed layout
     function renderGraph() {
-        d3.select("#graph").html("");
+        d3.select("#graph").html(""); // Clear the graph
         const svg = d3.select("#graph").append("svg").attr("width", 800).attr("height", 600);
 
-        // Build the hierarchy from the workflowData
-        const root = d3.stratify()
-            .id(d => d.taskId)
-            .parentId(d => d.prev)(workflowData.workflowTasks);
+        // Map workflow data to nodes and links
+        nodes = workflowData.workflowTasks.map(task => ({
+            id: task.taskId,
+            name: task.name,
+            type: task.type,
+            prev: task.prev,
+            nextOnSuccess: task.nextOnSuccess,
+            nextOnFailure: task.nextOnFailure,
+        }));
 
-        const treeLayout = d3.tree().size([700, 400]);
-        treeLayout(root);
+        links = [];
+        workflowData.workflowTasks.forEach(task => {
+            if (task.nextOnSuccess) {
+                task.nextOnSuccess.forEach(targetId => {
+                    links.push({ source: task.taskId, target: targetId, type: "success" });
+                });
+            }
+            if (task.nextOnFailure) {
+                task.nextOnFailure.forEach(targetId => {
+                    links.push({ source: task.taskId, target: targetId, type: "failure" });
+                });
+            }
+        });
 
-        // Links (arrows between nodes)
+        // Force-directed graph simulation
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-200))
+            .force("center", d3.forceCenter(400, 300));
+
+        // Create links (arrows between nodes)
         const link = svg.selectAll(".link")
-            .data(root.links())
+            .data(links)
             .enter().append("line")
             .attr("class", "link")
             .attr("stroke", d => d.type === "success" ? "green" : "red")
             .attr("stroke-width", 2);
 
-        // Nodes (task components)
+        // Create nodes (task components)
         const node = svg.selectAll(".node")
-            .data(root.descendants())
+            .data(nodes)
             .enter().append("g")
             .attr("class", "node")
-            .attr("transform", d => `translate(${d.x},${d.y})`)
-            .on("click", (event, d) => deleteNode(d));
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
 
         node.append("rect")
             .attr("width", 120)
             .attr("height", 40)
             .attr("rx", 6)
             .attr("ry", 6)
-            .attr("fill", d => d.parent === null ? "blue" : (d.children ? "#3b8e8d" : "darkred"));
+            .attr("fill", "#3b8e8d");
 
         node.append("text")
             .attr("dy", ".35em")
             .attr("text-anchor", "middle")
             .attr("fill", "white")
-            .text(d => `${d.data.name} (${d.data.type})`);
+            .text(d => `${d.name} (${d.type})`);
 
+        // Add delete button for each node
         node.append("foreignObject")
             .attr("x", 50)
             .attr("y", -10)
@@ -111,16 +136,33 @@ document.addEventListener("DOMContentLoaded", function () {
             .attr("class", "delete-button")
             .on("click", (event, d) => deleteNode(d));
 
-        // Links (arrows) between nodes
-        links.forEach(function (link) {
-            svg.append("line")
-                .attr("x1", link.source.x)
-                .attr("y1", link.source.y)
-                .attr("x2", link.target.x)
-                .attr("y2", link.target.y)
-                .attr("stroke", link.type === "success" ? "green" : "red")
-                .attr("stroke-width", 2);
+        // Simulation tick function
+        simulation.on("tick", () => {
+            link.attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
         });
+
+        // Drag functions
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
 
         // Delete node functionality
         function deleteNode(node) {
