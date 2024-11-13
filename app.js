@@ -34,12 +34,33 @@ document.getElementById("closePopupButton").addEventListener("click", () => {
     document.getElementById("addComponentPopup").classList.add("hidden");
 });
 
+// Handle JSON file upload
+document.getElementById("jsonFileInput").addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === "application/json") {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const jsonData = JSON.parse(e.target.result);
+                workflowData = jsonData; // Load JSON into workflowData
+                renderGraph(); // Render the graph with the uploaded data
+            } catch (error) {
+                alert("Error reading JSON file.");
+            }
+        };
+        reader.readAsText(file);
+    } else {
+        alert("Please upload a valid JSON file.");
+    }
+});
+
 // Render the graph as a linked list
 function renderGraph() {
     d3.select("#graph").html(""); // Clear previous graph
 
     const svg = d3.select("#graph").append("svg").attr("width", 1000).attr("height", 400);
 
+    // Create nodes from workflowTasks
     const nodes = workflowData.workflowTasks.map((task, index) => ({
         id: task.taskId,
         name: task.name,
@@ -48,6 +69,7 @@ function renderGraph() {
         y: 100
     }));
 
+    // Create links based on the task relationships
     let links = [];
     nodes.forEach(task => {
         if (task.prev) {
@@ -65,6 +87,7 @@ function renderGraph() {
         }
     });
 
+    // Add links (arrows)
     const link = svg.selectAll(".link")
         .data(links)
         .enter().append("line")
@@ -73,6 +96,7 @@ function renderGraph() {
         .attr("stroke-width", 2)
         .attr("marker-end", "url(#arrow)");
 
+    // Add nodes (rectangles)
     const node = svg.selectAll(".node")
         .data(nodes)
         .enter().append("g")
@@ -93,6 +117,7 @@ function renderGraph() {
         .attr("fill", "white")
         .text(d => d.name);
 
+    // Add arrow markers
     svg.append("defs").append("marker")
         .attr("id", "arrow")
         .attr("viewBox", "0 -5 10 10")
@@ -105,6 +130,7 @@ function renderGraph() {
         .attr("d", "M0,-5L10,0L0,5")
         .attr("fill", "#999");
 
+    // Apply force simulation for node positioning
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(100))
         .force("charge", d3.forceManyBody().strength(-500))
