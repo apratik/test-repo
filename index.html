@@ -10,29 +10,32 @@
     <div id="app">
         <h1>Workflow Designer</h1>
 
-        <!-- JSON Upload and Generate Flow -->
-        <div id="jsonUploadContainer">
-            <input type="file" id="jsonFileInput" accept=".json" />
-            <button id="generateFlowButton">Generate Flow</button>
-        </div>
+        <!-- File upload and generate button -->
+        <input type="file" id="jsonFileInput" accept=".json" />
+        <button id="generateFlowButton">Generate Flow</button>
 
-        <!-- Left panel with components -->
-        <div id="leftPanel">
-            <h3>Available Components</h3>
-            <div id="componentButtons"></div>
-        </div>
-
-        <!-- Graph display area -->
-        <div id="mainGraphContainer">
-            <div id="scrollableContainer">
-                <div id="graph"></div>
+        <div id="mainContainer">
+            <!-- Left Panel for components -->
+            <div id="componentPanel">
+                <h3>Available Components</h3>
+                <div id="componentButtons"></div>
             </div>
 
-            <!-- Export and download buttons -->
-            <button id="exportButton">Export Workflow</button>
-            <button id="downloadGraphButton">Download SVG</button>
-            <button id="copyJsonButton">Copy Workflow JSON</button>
+            <!-- Configuration Panel for editing component details -->
+            <div id="configPanel">
+                <h3>Component Configuration</h3>
+                <textarea id="componentConfigText" placeholder="Component configuration will appear here" readonly></textarea>
+                <button id="closeConfigButton">Close</button>
+            </div>
         </div>
+
+        <!-- Graph area to display the workflow -->
+        <div id="graph"></div>
+
+        <!-- Buttons for exporting and copying JSON -->
+        <button id="exportButton">Export Workflow</button>
+        <button id="downloadGraphButton">Download SVG</button>
+        <button id="copyJsonButton">Copy Workflow JSON</button>
     </div>
 
     <script src="https://d3js.org/d3.v6.min.js"></script>
