@@ -105,3 +105,624 @@ export default wrap(
   withTimer("getBin"),
   withCache
 );
+==============
+
+
+{
+  "_id": "2451638",
+  "workflowId": "2451638",
+  "name": "MainAPP",
+  "version": 1,
+  "details": {
+    "ownerApp": "ownerApp",
+    "tenantId": "owner",
+    "description": "Demo Platform App",
+    "createdBy": "abc@abc.com",
+    "createdAt": null
+  },
+  "workflowTasks": [
+    {
+      "taskId": "wf_start",
+      "name": "wf_start",
+      "description": "Starting workflow",
+      "prev": null,
+      "nextOnSuccess": [
+        "task_requestTransformation"
+      ],
+      "nextOnFailure": [],
+      "type": "START",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_wf_start"
+      },
+      "retryConfigReference": "NoRetry",
+      "rerunValues": null,
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_requestTransformation",
+      "name": "task_requestTransformation",
+      "description": "Performing business logic in Derivation task",
+      "prev": [
+        "wf_start"
+      ],
+      "nextOnSuccess": [
+        "task_convergenceTraceId"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "REQUEST_TRANSFORMATION",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_requestTransformation"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_convergenceTraceId",
+      "name": "task_convergenceTraceId",
+      "description": "Performing business logic in Derivation task",
+      "prev": [
+        "task_requestTransformation"
+      ],
+      "nextOnSuccess": [
+        "task_velocityRead"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "DERIVATION",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_convergenceTraceId"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_velocityRead",
+      "name": "task_velocityRead",
+      "description": "rule_execution",
+      "prev": [
+        "task_convergenceTraceId"
+      ],
+      "nextOnSuccess": [
+        "task_convergenceCustomerProfile"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "VELOCITY",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "SUCCESS",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_velocityRead"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_convergenceCustomerProfile",
+      "name": "task_convergenceCustomerProfile",
+      "description": "Post API call",
+      "prev": [
+        "task_convergenceTraceId"
+      ],
+      "nextOnSuccess": [
+        "task_requestDerivation"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "GQL",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_convergenceCustomerProfile"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_requestDerivation",
+      "name": "task_requestDerivation",
+      "description": "Performing business logic in Derivation task",
+      "prev": [
+        "task_convergenceCustomerProfile"
+      ],
+      "nextOnSuccess": [
+        "task_convergenceAccount"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "DERIVATION",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_requestDerivation"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_convergenceAccount",
+      "name": "task_convergenceAccount",
+      "description": "Post API call",
+      "prev": [
+        "task_requestDerivation"
+      ],
+      "nextOnSuccess": [
+        "task_dateTransformation"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "GQL",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_convergenceAccount"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_dateTransformation",
+      "name": "task_dateTransformation",
+      "description": "Performing business logic in Derivation task",
+      "prev": [
+        "task_convergenceAccount"
+      ],
+      "nextOnSuccess": [
+        "task_ruleExecution"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "DERIVATION",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_dateTransformation"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_ruleExecution",
+      "name": "task_ruleExecution",
+      "description": "rule_execution",
+      "prev": [
+        "task_convergenceAccountRelations"
+      ],
+      "nextOnSuccess": [
+        "task_decide_oakAlert"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "RULE",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "SUCCESS",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_ruleExecution"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_decide_oakAlert",
+      "name": "task_decide_oakAlert",
+      "description": "Decision taken based on verifiClaim field",
+      "prev": [
+        "task_ruleExecution"
+      ],
+      "nextOnSuccess": [
+        "task_oakAlertTransformation",
+        "task_velocityWrite"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "DECISION",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "SUCCESS",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "task_decide_oakAlert"
+      },
+      "retryConfigReference": "retryConfig",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_oakAlertTransformation",
+      "name": "task_oakAlertTransformation",
+      "description": "Reading info in PostGres DB",
+      "prev": [
+        "task_decide_oakAlert"
+      ],
+      "nextOnSuccess": [
+        "task_decideSaveOakAlert"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "MAP_TO_JSON",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_oakAlertTransformation"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_decideSaveOakAlert",
+      "name": "task_decideSaveOakAlert",
+      "description": "Decision taken based on verifiClaim field",
+      "prev": [
+        "task_oakAlertTransformation"
+      ],
+      "nextOnSuccess": [
+        "task_saveOakData",
+        "task_saveAuditLog"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "DECISION",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "SUCCESS",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "task_decideSaveOakAlert"
+      },
+      "retryConfigReference": "retryConfig",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_saveOakData",
+      "name": "task_saveOakData",
+      "description": "Saving info in PostGres DB",
+      "prev": [
+        "task_decideSaveOakAlert"
+      ],
+      "nextOnSuccess": [
+        "task_velocityWrite"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "POSTGRES_DB",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_saveOakData"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_velocityWrite",
+      "name": "task_velocityWrite",
+      "description": "rule_execution",
+      "prev": [
+        "task_saveOakData"
+      ],
+      "nextOnSuccess": [
+        "task_saveAuditLog"
+      ],
+      "nextOnFailure": [
+        "task_saveErrorAuditLog"
+      ],
+      "type": "VELOCITY",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "SUCCESS",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_velocityWrite"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_saveAuditLog",
+      "name": "task_saveAuditLog",
+      "description": "Saving info in PostGres DB",
+      "prev": [
+        "task_velocityWrite"
+      ],
+      "nextOnSuccess": [
+        "task_responseTransformation"
+      ],
+      "nextOnFailure": null,
+      "type": "SAVE_AUDIT_LOG",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_saveAuditLog"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_responseTransformation",
+      "name": "task_responseTransformation",
+      "description": "Saving info in PostGres DB",
+      "prev": [
+        "task_saveAuditLog"
+      ],
+      "nextOnSuccess": [
+        null
+      ],
+      "nextOnFailure": null,
+      "type": "RESPONSE_TRANSFORMATION",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_responseTransformation"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_readDataDb",
+      "name": "task_readDataDb",
+      "description": "Reading info in PostGres DB",
+      "prev": [
+        "task_convergenceAccount"
+      ],
+      "nextOnSuccess": [
+        "task_oakAlertTransformation"
+      ],
+      "nextOnFailure": null,
+      "type": "DBHELPER",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_readDataDb"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    },
+    {
+      "taskId": "task_saveErrorAuditLog",
+      "name": "task_saveErrorAuditLog",
+      "description": "Saving info in PostGres DB",
+      "prev": [
+        "task_velocityWrite"
+      ],
+      "nextOnSuccess": [
+        null
+      ],
+      "nextOnFailure": null,
+      "type": "SAVE_AUDIT_LOG",
+      "mode": {
+        "isOnline": true,
+        "details": []
+      },
+      "result": {
+        "status": "",
+        "input": {},
+        "output": {},
+        "errors": []
+      },
+      "isSynchronous": true,
+      "signature": {
+        "reference": "RobinhdApp_task_saveErrorAuditLog"
+      },
+      "retryConfigReference": "NoRetry",
+      "pauseConfig": {
+        "isPause": false,
+        "pauseType": "PAUSE_MANUAL"
+      }
+    }
+  ]
+}
