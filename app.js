@@ -7,9 +7,13 @@ document.getElementById('jsonFileInput').addEventListener('change', function (ev
         const reader = new FileReader();
         reader.onload = function (e) {
             try {
-                workflowData = JSON.parse(e.target.result);
-                renderGraph(workflowData);
-                populateComponents(workflowData);
+                workflowData = JSON.parse(e.target.result); // Parse the JSON file
+                if (workflowData && workflowData.workfLowTasks) {
+                    renderGraph(workflowData);
+                    populateComponents(workflowData);
+                } else {
+                    alert('Invalid workflow data.');
+                }
             } catch (err) {
                 alert('Invalid JSON format');
             }
@@ -25,21 +29,24 @@ function renderGraph(data) {
     const svg = d3.select('#graph');
     svg.selectAll('*').remove(); // Clear any existing graph
 
-    // Process the workflow tasks and map them to fixed positions
+    // Ensure we have tasks data
     const tasks = data.workfLowTasks || [];
-    const taskData = tasks.map(task => ({
+    
+    // Map tasks to a structure we can work with
+    const taskData = tasks.map((task, index) => ({
         id: task.taskId,
         name: task.name,
         prev: task.prev,
-        nextOnSuccess: task.nextOnSuccess,
-        nextOnFailure: task.nextOnFailure,
-        type: task.type
+        nextOnSuccess: Array.isArray(task.nextOnSuccess) ? task.nextOnSuccess : [task.nextOnSuccess],
+        nextOnFailure: Array.isArray(task.nextOnFailure) ? task.nextOnFailure : [task.nextOnFailure],
+        type: task.type,
+        index: index // To use for positioning later
     }));
 
-    // Set up a scale for colors based on task types
+    // Set up a color scale for task types
     const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
-    // Add tasks as rectangles
+    // Add task elements as rectangles in the SVG
     const taskElements = svg
         .selectAll('g')
         .data(taskData)
@@ -73,7 +80,7 @@ function renderGraph(data) {
         .style('font-size', '12px')
         .text(d => d.id);
 
-    // Draw arrows for connections based on prev/nextOnSuccess/nextOnFailure
+    // Draw arrows for connections based on prev, nextOnSuccess, and nextOnFailure
     taskData.forEach((task, index) => {
         if (task.prev) {
             const prevTask = taskData.find(t => t.id === task.prev);
@@ -108,18 +115,19 @@ function drawArrow(fromTask, toTask, color) {
     const toX = 150; // Left side of the toTask box
     const toY = 50 + toTask.index * 150 + 40; // Vertical center of the toTask box
 
+    // Draw the line
     svg.append('line')
         .attr('x1', fromX)
         .attr('y1', fromY)
         .attr('x2', toX)
         .attr('y2', toY)
-        .attr('stroke', color) // Set the line color based on the connection type
+        .attr('stroke', color)
         .attr('stroke-width', 2);
 
     // Draw an arrowhead
     svg.append('polygon')
         .attr('points', `${toX},${toY} ${toX - 10},${toY - 5} ${toX - 10},${toY + 5}`)
-        .style('fill', color); // Set the arrowhead color
+        .style('fill', color);
 }
 
 // Populate the "Available Components" list
