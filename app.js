@@ -185,7 +185,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 .attr("d", d => generateLinkPath(d))  // Custom function to generate link paths
                 .attr("stroke-width", 2)
                 .attr("fill", "none")
-                .attr("stroke", "#3498db")  // Stroke color for the link path
                 .attr("marker-end", "url(#arrow)")  // Attach the arrow at the end of the path
                 .merge(link)
                 .transition()
@@ -216,10 +215,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 .attr("text-anchor", "right")
                 .style("font-size", "10px")  // Smaller font size
                 .text(function(d) {
-                    return d.source.data.type;  // Display type as label
+                    // Check whether it's nextOnSuccess or nextOnFailure
+                    if (d.source.data.nextOnSuccess && d.source.data.nextOnSuccess.includes(d.target.data.taskId)) {
+                        return "Success";
+                    }
+                    if (d.source.data.nextOnFailure && d.source.data.nextOnFailure.includes(d.target.data.taskId)) {
+                        return "Failure";
+                    }
+                    return "";  // Default case
                 });
-
-            linkLabels.exit().remove();
         }
 
         // Function to generate the link path between two nodes
@@ -228,47 +232,53 @@ document.addEventListener("DOMContentLoaded", function () {
             const target = d.target;
             const sourceX = source.y + rectangleWidth; // Right edge of source
             const sourceY = source.x + 30;  // Middle of the source node height
-            const targetX = target.y;  // Left edge of target
+            const targetX = target.y - 30; // Left edge of the target node
             const targetY = target.x + 30;  // Middle of the target node height
-            return `M${sourceX},${sourceY}L${targetX},${targetY}`;
+            return `M${sourceX},${sourceY} C${(sourceX + targetX) / 2},${sourceY} ${(sourceX + targetX) / 2},${targetY} ${targetX},${targetY}`;
         }
 
-        // Function to determine the color of the node based on the type
+        // Function to determine the color of the node based on type
         function getNodeColor(d) {
-            return d.data.type === "START" ? "#2ecc71" : "#3498db";  // Green for START, Blue for others
+            switch (d.data.type) {
+                case "start":
+                    return "green";
+                case "end":
+                    return "red";
+                default:
+                    return "blue";
+            }
         }
 
-        // Function to set the link class based on the type
+        // Function to determine the link class based on nextOnSuccess or nextOnFailure
         function getLinkClass(d) {
-            return d.source.data.type === "FAILURE" ? "link failure" : "link default";
+            return d.source.data.nextOnSuccess && d.source.data.nextOnSuccess.includes(d.target.data.taskId) ? "success-link" :
+                   d.source.data.nextOnFailure && d.source.data.nextOnFailure.includes(d.target.data.taskId) ? "failure-link" :
+                   "default-link";
         }
+
+        // Download SVG as file
+        document.getElementById("download-svg").addEventListener("click", function() {
+            const svgElement = document.querySelector("svg");
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const blob = new Blob([svgData], { type: "image/svg+xml" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "workflow.svg";
+            link.click();
+        });
+
+        // Download workflow data as JSON
+        document.getElementById("download-workflow").addEventListener("click", function() {
+            const blob = new Blob([JSON.stringify(workflowData)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "workflow.json";
+            link.click();
+        });
     }
 
-    // Function to download the workflow as JSON
-    function downloadJSON() {
-        const jsonData = JSON.stringify(workflowData, null, 2);
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "workflow.json";
-        link.click();
-    }
-
-    // Function to download the SVG
-    function downloadSVG() {
-        const svgElement = document.querySelector("svg");
-        const svgData = new XMLSerializer().serializeToString(svgElement);
-        const blob = new Blob([svgData], { type: 'image/svg+xml' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "workflow.svg";
-        link.click();
-    }
-
-    // Set up file upload event listener
-    document.getElementById("jsonFileInput").addEventListener("change", handleFileUpload);
-
-    // Set up download buttons
-    document.getElementById("downloadWorkflow").addEventListener("click", downloadJSON);
-    document.getElementById("downloadSVG").addEventListener("click", downloadSVG);
+    // Listen for file upload
+    document.getElementById("file-input").addEventListener("change", handleFileUpload);
 });
