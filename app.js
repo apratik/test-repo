@@ -10,7 +10,6 @@ function handleFileUpload(event) {
         try {
             // Parse the JSON and handle any errors
             workflowData = JSON.parse(reader.result);
-            populateComponentPanel(workflowData.workflowTasks); // Populate component panel
             renderGraph(workflowData.workflowTasks); // Render the graph after loading
         } catch (e) {
             console.error("Invalid JSON format", e);
@@ -24,21 +23,6 @@ function handleFileUpload(event) {
 
     // Read the selected file as text
     reader.readAsText(event.target.files[0]);
-}
-
-// Populate the component panel with buttons based on JSON
-function populateComponentPanel(data) {
-    const componentButtonsContainer = document.getElementById('componentButtons');
-    componentButtonsContainer.innerHTML = ''; // Clear existing components
-
-    data.forEach(component => {
-        const button = document.createElement('button');
-        button.innerText = component.type; // Use type as the label
-        button.addEventListener('click', () => {
-            alert(`Component Type: ${component.type}\nTask ID: ${component.taskId}`);
-        });
-        componentButtonsContainer.appendChild(button);
-    });
 }
 
 // Render the graph of the workflow from the JSON data
@@ -112,7 +96,8 @@ function renderGraph(data) {
         .enter().append("line")
         .attr("class", "link")
         .style("stroke", "#ccc")
-        .style("stroke-width", 2);
+        .style("stroke-width", 2)
+        .attr("marker-end", "url(#arrow)"); // Add arrow to the link
 
     // Create node elements
     const node = svg.selectAll(".node")
@@ -175,3 +160,17 @@ function renderGraph(data) {
         d.fy = null;
     }
 }
+
+// Create an arrow marker for the links
+const svg = d3.select("#graph");
+svg.append("defs").append("marker")
+    .attr("id", "arrow")
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 10)
+    .attr("refY", 0)
+    .attr("orient", "auto")
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .append("path")
+    .attr("d", "M0,-5L10,0L0,5")
+    .style("fill", "#ccc");
