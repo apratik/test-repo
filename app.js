@@ -204,7 +204,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .attr("class", "link-label")
                 .attr("x", function(d) {
                     // Get midpoint between source and target for X coordinate
-                    return (d.source.y + d.target.y+ 230) / 2;
+                    return (d.source.y + d.target.y + 230) / 2;
                 })
                 .attr("y", function(d) {
                     // Get midpoint between source and target for Y coordinate
