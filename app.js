@@ -230,10 +230,10 @@ document.addEventListener("DOMContentLoaded", function () {
         function generateLinkPath(d) {
             const source = d.source;
             const target = d.target;
-            const sourceX = source.y + rectangleWidth; // Right edge of source
-            const sourceY = source.x + 30;  // Middle of the source node height
-            const targetX = target.y - 30; // Left edge of the target node
-            const targetY = target.x + 30;  // Middle of the target node height
+            const sourceX = source.y + rectangleWidth / 2;
+            const sourceY = source.x + 30;
+            const targetX = target.y - rectangleWidth / 2;
+            const targetY = target.x + 30;
             return `M${sourceX},${sourceY} C${(sourceX + targetX) / 2},${sourceY} ${(sourceX + targetX) / 2},${targetY} ${targetX},${targetY}`;
         }
 
