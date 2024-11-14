@@ -1,173 +1,170 @@
-function renderGraph(workflowData) {
-    const taskNodes = workflowData.workflowTasks;
+document.getElementById("jsonFileInput").addEventListener("change", handleFileUpload);
+document.getElementById("exportButton").addEventListener("click", exportWorkflow);
+document.getElementById("downloadGraphButton").addEventListener("click", downloadGraph);
+document.getElementById("copyJsonButton").addEventListener("click", copyWorkflowJson);
 
-    // Create SVG container for the graph
-    const svgWidth = 1000;
-    const svgHeight = 500;
-    const svg = d3.select('#graph')
-        .append('svg')
-        .attr('width', svgWidth)
-        .attr('height', svgHeight);
+let workflowData = null;
 
-    // Define scales for positioning nodes
-    const xScale = d3.scaleBand().padding(1).domain(taskNodes.map(d => d.taskId)).range([50, svgWidth - 50]);
-    const yScale = d3.scaleLinear().domain([0, taskNodes.length]).range([50, svgHeight - 50]);
+// Handle file upload and read JSON data
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            workflowData = JSON.parse(e.target.result);
+            renderGraph(workflowData);
+        } catch (error) {
+            alert("Invalid JSON format. Please upload a valid workflow JSON file.");
+            console.error("Error parsing JSON:", error);
+        }
+    };
+    reader.readAsText(file);
+}
 
-    // Create nodes (components)
-    const taskGroups = svg.selectAll('g')
-        .data(taskNodes)
+// Render the workflow graph based on workflowData
+function renderGraph(data) {
+    const graphContainer = d3.select("#graph");
+    graphContainer.html(""); // Clear previous graph
+    const width = 1200, height = 800;
+
+    const svg = graphContainer
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    if (!data || !data.workflowTasks) {
+        console.error("Invalid workflow data format");
+        return;
+    }
+
+    const tasks = data.workflowTasks;
+
+    // Define a color scale based on component type
+    const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+    // Create nodes and links arrays
+    const nodes = [];
+    const links = [];
+
+    tasks.forEach((task) => {
+        nodes.push({ id: task.taskId, name: task.name, type: task.type });
+
+        if (task.prev) {
+            links.push({ source: task.prev, target: task.taskId, status: "prev" });
+        }
+        if (task.nextOnSuccess) {
+            links.push({ source: task.taskId, target: task.nextOnSuccess, status: "success" });
+        }
+        if (task.nextOnFailure) {
+            links.push({ source: task.taskId, target: task.nextOnFailure, status: "failure" });
+        }
+    });
+
+    // Create simulation for node layout
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(150))
+        .force("charge", d3.forceManyBody().strength(-500))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    // Draw links
+    const link = svg.append("g")
+        .selectAll("line")
+        .data(links)
         .enter()
-        .append('g')
-        .attr('transform', (d, i) => `translate(${xScale(d.taskId)},${yScale(i)})`);
+        .append("line")
+        .attr("stroke-width", 2)
+        .attr("stroke", d => d.status === "success" ? "green" : d.status === "failure" ? "red" : "gray")
+        .attr("marker-end", "url(#arrow)");
 
-    // Create rectangles for task nodes
-    taskGroups.append('rect')
-        .attr('width', 150)
-        .attr('height', 60)
-        .attr('rx', 10)
-        .attr('ry', 10)
-        .attr('fill', d => getColorByType(d.type)) // Color by component type
-        .attr('stroke', 'black');
+    // Define arrow markers
+    svg.append("defs").append("marker")
+        .attr("id", "arrow")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 15)
+        .attr("refY", 0)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M0,-5L10,0L0,5")
+        .attr("fill", "black");
 
-    // Add task name inside the rectangle
-    taskGroups.append('text')
-        .attr('x', 75) // Centering text horizontally
-        .attr('y', 25) // Vertical position for the task name
-        .attr('text-anchor', 'middle')
-        .attr('font-weight', 'bold')
+    // Draw nodes
+    const node = svg.append("g")
+        .selectAll("rect")
+        .data(nodes)
+        .enter()
+        .append("g")
+        .attr("class", "node");
+
+    node.append("rect")
+        .attr("width", 120)
+        .attr("height", 40)
+        .attr("fill", d => colorScale(d.type))
+        .attr("rx", 5)
+        .attr("ry", 5);
+
+    node.append("text")
+        .attr("dx", 10)
+        .attr("dy", 20)
         .text(d => d.type);
 
-    // Add task ID underneath the rectangle (task name)
-    taskGroups.append('text')
-        .attr('x', 75) // Centering text horizontally
-        .attr('y', 45) // Slightly lower position for the task ID
-        .attr('text-anchor', 'middle')
-        .attr('font-size', '10px')
-        .text(d => d.taskId);
+    node.append("text")
+        .attr("dx", 10)
+        .attr("dy", 35)
+        .text(d => d.name)
+        .attr("font-size", "12px");
 
-    // Create arrows and labels for connections
-    taskNodes.forEach(task => {
-        // Handle nextOnSuccess arrows (green)
-        if (task.nextOnSuccess) {
-            task.nextOnSuccess.forEach(successorId => {
-                const successor = taskNodes.find(t => t.taskId === successorId);
-                if (successor) {
-                    createArrow(svg, task, successor, 'green'); // Green arrow for success
-                }
-            });
-        }
-
-        // Handle nextOnFailure arrows (red)
-        if (task.nextOnFailure) {
-            task.nextOnFailure.forEach(failureId => {
-                const failure = taskNodes.find(t => t.taskId === failureId);
-                if (failure) {
-                    createArrow(svg, task, failure, 'red'); // Red arrow for failure
-                }
-            });
-        }
-
-        // Handle start of the flow (prev is null)
-        if (task.prev === null) {
-            // Mark this task as start with a label or other visual cue
-            svg.append('text')
-                .attr('x', xScale(task.taskId))
-                .attr('y', yScale(taskNodes.indexOf(task)) - 10)
-                .attr('text-anchor', 'middle')
-                .attr('font-size', '12px')
-                .attr('fill', 'blue')
-                .text('START');
-        }
-
-        // Handle end of the flow (nextOnSuccess or nextOnFailure is null)
-        if (!task.nextOnSuccess || task.nextOnSuccess.length === 0) {
-            // Mark this task as end with a label or other visual cue
-            svg.append('text')
-                .attr('x', xScale(task.taskId))
-                .attr('y', yScale(taskNodes.indexOf(task)) + 75)
-                .attr('text-anchor', 'middle')
-                .attr('font-size', '12px')
-                .attr('fill', 'red')
-                .text('END');
-        }
+    simulation.on("tick", () => {
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
+        link.attr("x1", d => d.source.x + 60)
+            .attr("y1", d => d.source.y + 20)
+            .attr("x2", d => d.target.x + 60)
+            .attr("y2", d => d.target.y + 20);
     });
 }
 
-// Function to create arrows for connections
-function createArrow(svg, source, target, color) {
-    const sourceX = xScale(source.taskId) + 75;
-    const sourceY = yScale(taskNodes.indexOf(source)) + 30;
-    const targetX = xScale(target.taskId) + 75;
-    const targetY = yScale(taskNodes.indexOf(target)) + 30;
-
-    // Draw a line with an arrow
-    svg.append('line')
-        .attr('x1', sourceX)
-        .attr('y1', sourceY)
-        .attr('x2', targetX)
-        .attr('y2', targetY)
-        .attr('stroke', color)
-        .attr('stroke-width', 2)
-        .attr('marker-end', 'url(#arrowhead)');
-
-    // Add task name as a label on the arrow
-    const midX = (sourceX + targetX) / 2;
-    const midY = (sourceY + targetY) / 2;
-
-    svg.append('text')
-        .attr('x', midX)
-        .attr('y', midY - 10) // Adjust for label placement
-        .attr('text-anchor', 'middle')
-        .attr('font-size', '10px')
-        .attr('fill', color)
-        .text(source.taskId); // Task name on the arrow
+// Export workflow data as JSON file
+function exportWorkflow() {
+    if (!workflowData) {
+        alert("No workflow data to export.");
+        return;
+    }
+    const blob = new Blob([JSON.stringify(workflowData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "workflow.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
-// Set color based on task type
-function getColorByType(type) {
-    const colors = {
-        'START': 'lightgreen',
-        'END': 'lightcoral',
-        'DEFAULT': 'lightblue'
-    };
-    return colors[type] || colors['DEFAULT'];
+// Download the SVG graph as an image file
+function downloadGraph() {
+    const svg = document.querySelector("#graph svg");
+    if (!svg) {
+        alert("No graph available to download.");
+        return;
+    }
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "workflow_graph.svg";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
-// Handle Download Graph as SVG
-document.getElementById('downloadGraphButton').addEventListener('click', function() {
-    const svg = document.querySelector('svg');
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svg);
-
-    const blob = new Blob([svgString], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'workflow_graph.svg';
-    a.click();
-    URL.revokeObjectURL(url);
-});
-
-// Handle Export Workflow JSON
-document.getElementById('exportButton').addEventListener('click', function() {
-    const json = JSON.stringify(workflowData, null, 2); // Pretty print JSON
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'workflow_data.json';
-    a.click();
-    URL.revokeObjectURL(url);
-});
-
-// Handle Copy Workflow JSON to Clipboard
-document.getElementById('copyJsonButton').addEventListener('click', function() {
-    const json = JSON.stringify(workflowData, null, 2);
-    navigator.clipboard.writeText(json)
-        .then(() => {
-            alert('Workflow JSON copied to clipboard!');
-        })
-        .catch(err => {
-            console.error('Error copying to clipboard', err);
-        });
-});
+// Copy workflow JSON to clipboard
+function copyWorkflowJson() {
+    if (!workflowData) {
+        alert("No workflow data to copy.");
+        return;
+    }
+    navigator.clipboard.writeText(JSON.stringify(workflowData, null, 2))
+        .then(() => alert("Workflow JSON copied to clipboard."))
+        .catch(err => console.error("Failed to copy workflow JSON:", err));
+}
