@@ -1,123 +1,289 @@
-document.getElementById('jsonFileInput').addEventListener('change', handleFileUpload);
+document.addEventListener("DOMContentLoaded", function () {
+    let workflowData;
 
-// Handle file upload and parse JSON
-function handleFileUpload(event) {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        try {
-            const workflowData = JSON.parse(e.target.result);
-            if (workflowData && workflowData.workFlowTasks) {
-                renderGraph(workflowData);
-            } else {
-                alert("Invalid workflow data.");
-            }
-        } catch (error) {
-            alert('Invalid JSON format.');
+    // Handle file upload
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    workflowData = JSON.parse(e.target.result);
+                    renderGraph(workflowData);
+                } catch (error) {
+                    console.error("Invalid JSON format");
+                }
+            };
+            reader.readAsText(file);
         }
-    };
-    reader.readAsText(file);
-}
+    }
 
-function renderGraph(workflowData) {
-    const svg = d3.select('#graph').html('').append('svg')
-        .attr('width', '100%')
-        .attr('height', '100%')
-        .style('background', '#f4f4f9'); // Page background color
+    // Render graph based on the workflow data
+    function renderGraph(data) {
+        const graphContainer = d3.select("#graph");
+        graphContainer.html(""); // Clear previous graph
+        const width = 3000, height = 1500; // Increased width and height for large graphs
 
-    const margin = { top: 20, right: 90, bottom: 30, left: 90 };
-    const width = 1200 - margin.left - margin.right;
-    const height = 800 - margin.top - margin.bottom;
+        const svg = graphContainer
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(100, 50)");
 
-    const g = svg.append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
+        if (!data || !data.workflowTasks) {
+            console.error("Invalid workflow data format");
+            return;
+        }
 
-    // Root for hierarchical data
-    const root = d3.hierarchy({ name: "Root", children: workflowData.workFlowTasks }, d => d.nextOnSuccess)
-        .sort((a, b) => d3.ascending(a.data.name, b.data.name));
+        const tasks = data.workflowTasks;
+        const taskMap = {};
 
-    const treeLayout = d3.tree().size([height, width]);
-    treeLayout(root);
+        // Initialize taskMap with tasks and empty children arrays
+        tasks.forEach(task => {
+            taskMap[task.taskId] = { ...task, children: [] };
+        });
 
-    // Links (arrows between nodes)
-    const link = g.selectAll(".link")
-        .data(root.links())
-        .enter().append("path")
-        .attr("class", "link")
-        .attr("d", d3.linkHorizontal()
-            .x(d => d.y)
-            .y(d => d.x))
-        .attr("stroke", d => d.target.data.nextOnFailure ? "red" : "green") // Red for failure, green for success
-        .attr("fill", "none");
+        // Process task dependencies
+        tasks.forEach(task => {
+            // Handle prev, nextOnSuccess, and nextOnFailure as lists or null
+            if (task.prev && Array.isArray(task.prev)) {
+                task.prev.forEach(prevTaskId => {
+                    if (taskMap[prevTaskId]) {
+                        taskMap[prevTaskId].children.push(taskMap[task.taskId]);
+                    }
+                });
+            }
 
-    // Nodes (the components)
-    const node = g.selectAll(".node")
-        .data(root.descendants())
-        .enter().append("g")
-        .attr("class", "node")
-        .attr("transform", d => `translate(${d.y},${d.x})`);
+            if (task.nextOnSuccess && Array.isArray(task.nextOnSuccess)) {
+                task.nextOnSuccess.forEach(nextTaskId => {
+                    if (taskMap[nextTaskId]) {
+                        taskMap[task.taskId].children.push(taskMap[nextTaskId]);
+                    }
+                });
+            }
 
-    // Rectangles for nodes
-    node.append("rect")
-        .attr("width", 150)
-        .attr("height", 60)
-        .attr("y", -30)
-        .attr("x", -75)
-        .attr("fill", d => d.data.type === 'START' ? '#d1e7dd' : '#fff')
-        .attr("stroke", "#555");
+            if (task.nextOnFailure && Array.isArray(task.nextOnFailure)) {
+                task.nextOnFailure.forEach(nextTaskId => {
+                    if (taskMap[nextTaskId]) {
+                        taskMap[task.taskId].children.push(taskMap[nextTaskId]);
+                    }
+                });
+            }
+        });
 
-    // Text inside the node (Component type)
-    node.append("text")
-        .attr("dy", 4)
-        .attr("text-anchor", "middle")
-        .text(d => d.data.type) // Component type as node label
-        .style("font-size", "12px")
-        .style("fill", "#333");
+        // Find the root task (no prev task)
+        const rootTask = tasks.find(task => !task.prev || task.prev.length === 0);
+        if (!rootTask) {
+            console.error("No root task found in the workflow data");
+            return;
+        }
 
-    // Task name under the component type
-    node.append("text")
-        .attr("dy", 18)
-        .attr("text-anchor", "middle")
-        .text(d => d.data.name) // Task name under the component
-        .style("font-size", "10px")
-        .style("fill", "#333");
+        const root = d3.hierarchy(taskMap[rootTask.taskId]);
+        root.x0 = height / 2;
+        root.y0 = 0;
 
-    // Tooltip on hover to show task name
-    node.append("title")
-        .text(d => d.data.name);
+        const treeLayout = d3.tree().size([height - 200, width - 300]);
+        treeLayout(root);
 
-    // Set up available components in the left panel
-    const componentPanel = document.getElementById('componentButtons');
-    workflowData.workFlowTasks.forEach(task => {
-        const button = document.createElement('button');
-        button.innerText = task.name;
-        button.onclick = function() {
-            alert(`Selected Task: ${task.name}\nType: ${task.type}\nPrev: ${task.prev}\nNext: ${task.nextOnSuccess}`);
-        };
-        componentPanel.appendChild(button);
-    });
-}
+        svg.append("defs").append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 15)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "black");
 
-// Export to SVG file
-document.getElementById('downloadGraphButton').addEventListener('click', function () {
-    const svgElement = document.querySelector('svg');
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svgElement);
-    const svgBlob = new Blob([svgString], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(svgBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'workflow_graph.svg';
-    a.click();
-    URL.revokeObjectURL(url);
-});
+        update(root);
 
-// Copy Workflow JSON to Clipboard
-document.getElementById('copyJsonButton').addEventListener('click', function () {
-    const workflowJson = JSON.stringify(workflowData, null, 2);
-    navigator.clipboard.writeText(workflowJson).then(function () {
-        alert('Workflow JSON copied to clipboard!');
-    }, function (err) {
-        alert('Failed to copy text: ', err);
-    });
+        function update(source) {
+            const treeData = treeLayout(root);
+            const nodes = treeData.descendants();
+            const links = treeData.links();
+
+            nodes.forEach(d => d.y = d.depth * 180);
+
+            const node = svg.selectAll("g.node")
+                .data(nodes, d => d.data.taskId || (d.data.id = ++i));
+
+            const nodeEnter = node.enter().append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${source.y0},${source.x0})`)
+                .on("click", click);
+
+            nodeEnter.append("rect")
+                .attr("width", d => Math.max(120, d.data.name.length * 8))
+                .attr("height", d => Math.max(60, 20 + d.data.name.split(" ").length * 20))
+                .attr("fill", "transparent")
+                .attr("stroke", d => getNodeColor(d))
+                .attr("stroke-width", 2)
+                .attr("rx", 5)
+                .attr("ry", 5);
+
+            nodeEnter.append("text")
+                .attr("dx", 10)
+                .attr("dy", 20)
+                .text(d => d.data.type)
+                .attr("fill", "#fff");
+
+            nodeEnter.append("text")
+                .attr("dx", 10)
+                .attr("dy", 40)
+                .text(d => `Task: ${d.data.name}`)
+                .attr("fill", "#ddd")
+                .style("white-space", "pre-wrap")
+                .style("word-wrap", "break-word");
+
+            const nodeUpdate = nodeEnter.merge(node);
+
+            nodeUpdate.transition()
+                .duration(200)
+                .attr("transform", d => `translate(${d.y},${d.x})`);
+
+            nodeUpdate.select("rect")
+                .attr("width", d => Math.max(120, d.data.name.length * 8))
+                .attr("height", d => Math.max(60, 20 + d.data.name.split(" ").length * 20));
+
+            nodeUpdate.select("text").attr("dx", 10).attr("dy", 40);
+
+            node.exit().transition()
+                .duration(200)
+                .attr("transform", d => `translate(${source.y},${source.x})`)
+                .remove();
+
+            const link = svg.selectAll("path.link")
+                .data(links, d => d.target.data.taskId);
+
+            link.enter().insert("path", "g")
+                .attr("class", d => `link ${getArrowColor(d)}`)
+                .attr("d", d => {
+                    const o = { x: source.x0, y: source.y0 };
+                    return diagonal({ source: o, target: o });
+                })
+                .attr("stroke-width", 2)
+                .attr("fill", "none")
+                .attr("marker-end", "url(#arrow)")
+                .merge(link)
+                .transition()
+                .duration(200)
+                .attr("d", diagonal);
+
+            link.exit().transition()
+                .duration(200)
+                .attr("d", d => {
+                    const o = { x: source.x, y: source.y };
+                    return diagonal({ source: o, target: o });
+                })
+                .remove();
+
+            nodes.forEach(d => {
+                d.x0 = d.x;
+                d.y0 = d.y;
+            });
+
+            function click(event, d) {
+                if (d.children) {
+                    d._children = d.children;
+                    d.children = null;
+                } else {
+                    d.children = d._children;
+                    d._children = null;
+                }
+                update(d);
+            }
+        }
+
+        function diagonal(d) {
+            const sourceX = d.source.y + 50;
+            const sourceY = d.source.x + 25;
+            const targetX = d.target.y + 50;
+            const targetY = d.target.x + 25;
+
+            const sourceRectWidth = Math.max(120, d.source.data.name.length * 8);
+            const sourceRectHeight = Math.max(60, 20 + d.source.data.name.split(" ").length * 20);
+            const targetRectWidth = Math.max(120, d.target.data.name.length * 8);
+            const targetRectHeight = Math.max(60, 20 + d.target.data.name.split(" ").length * 20);
+
+            let sourceMidX = sourceX + sourceRectWidth / 2;
+            let sourceMidY = sourceY + sourceRectHeight / 2;
+
+            let targetMidX = targetX + targetRectWidth / 2;
+            let targetMidY = targetY + targetRectHeight / 2;
+
+            if (d.source.y < d.target.y) {
+                sourceMidY = sourceY + sourceRectHeight;
+                targetMidY = targetY;
+            } else if (d.source.y > d.target.y) {
+                sourceMidY = sourceY;
+                targetMidY = targetY + targetRectHeight;
+            } else if (d.source.x < d.target.x) {
+                sourceMidX = sourceX + sourceRectWidth;
+                targetMidX = targetX;
+            } else if (d.source.x > d.target.x) {
+                sourceMidX = sourceX;
+                targetMidX = targetX + targetRectWidth;
+            }
+
+            return `M${sourceMidX},${sourceMidY}
+                    C${sourceMidX},${(sourceMidY + targetMidY) / 2}
+                    ${targetMidX},${(sourceMidY + targetMidY) / 2}
+                    ${targetMidX},${targetMidY}`;
+        }
+
+        function getArrowColor(d) {
+            if (d.source.data.type === "Success") return "green";
+            if (d.source.data.type === "Failure") return "red";
+            return "black";
+        }
+
+        function getNodeColor(d) {
+            if (d.data.type === "Success") return "green";
+            if (d.data.type === "Failure") return "red";
+            return "black";
+        }
+    }
+
+    // Export workflow data as JSON
+    function exportWorkflow() {
+        const blob = new Blob([JSON.stringify(workflowData, null, 2)], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "workflow.json";
+        link.click();
+    }
+
+    // Download the rendered graph as an SVG
+    function downloadGraph() {
+        const svgElement = document.querySelector("svg");
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svgElement);
+        const blob = new Blob([svgString], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "graph.svg";
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // Copy workflow JSON to clipboard
+    function copyWorkflowJson() {
+        navigator.clipboard.writeText(JSON.stringify(workflowData, null, 2))
+            .then(() => {
+                console.log("Workflow JSON copied to clipboard");
+            })
+            .catch(err => {
+                console.error("Error copying to clipboard: ", err);
+            });
+    }
+
+    // Event listeners
+    document.getElementById("jsonFileInput").addEventListener("change", handleFileUpload);
+    document.getElementById("exportButton").addEventListener("click", exportWorkflow);
+    document.getElementById("downloadGraphButton").addEventListener("click", downloadGraph);
+    document.getElementById("copyJsonButton").addEventListener("click", copyWorkflowJson);
 });
