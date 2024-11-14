@@ -85,3 +85,27 @@ function renderGraph(data) {
     node.append("title")
         .text(d => d.data.name); // Tooltip for task name
 }
+
+// Export to SVG file
+document.getElementById('downloadGraphButton').addEventListener('click', function () {
+    const svgElement = document.querySelector('svg');
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svgElement);
+    const svgBlob = new Blob([svgString], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(svgBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'workflow_graph.svg';
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// Copy Workflow JSON to Clipboard
+document.getElementById('copyJsonButton').addEventListener('click', function () {
+    const workflowJson = JSON.stringify(workflowData, null, 2);
+    navigator.clipboard.writeText(workflowJson).then(function () {
+        alert('Workflow JSON copied to clipboard!');
+    }, function (err) {
+        alert('Failed to copy text: ', err);
+    });
+});
