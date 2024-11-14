@@ -1,8 +1,8 @@
+/* Basic styling for the body and page layout */
 body {
     font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: row;
-    height: 100vh;
+    background-color: #f4f4f9; /* Light background */
+    color: #333; /* Dark font */
     margin: 0;
     padding: 0;
 }
@@ -10,47 +10,70 @@ body {
 #app {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    align-items: center;
+    padding: 20px;
 }
 
-#leftPanel {
-    width: 250px;
-    padding: 10px;
-    background-color: #f4f4f4;
-    overflow-y: auto;
-    height: 100vh;
-}
-
-#componentButtons {
+#componentPanel {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 300px;
     margin-bottom: 20px;
 }
 
-#componentButtons div {
-    margin: 10px 0;
-    padding: 5px;
-    background-color: #e0e0e0;
-    cursor: pointer;
-    border-radius: 5px;
-    text-align: center;
+#componentPanel h3 {
+    margin-bottom: 10px;
 }
 
-#graphArea {
-    flex-grow: 1;
-    padding: 20px;
-    background-color: #fff;
+#componentButtons {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+#componentButtons button {
+    margin-bottom: 5px;
+}
+
+#graph {
     overflow: auto;
+    height: 70vh;
+    width: 100%;
+    background-color: #fff;
+}
+
+.node rect {
+    cursor: pointer;
+}
+
+.node text {
+    pointer-events: none; /* Prevents text from triggering collapse */
+}
+
+.node:hover rect {
+    stroke: #000;
+    stroke-width: 1.5px;
+}
+
+/* Styling for the file upload input and buttons */
+#jsonFileInput {
+    margin-top: 10px;
 }
 
 button {
-    margin: 10px;
-    padding: 10px;
-    cursor: pointer;
-    background-color: #007BFF;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background-color: #4CAF50;
     color: white;
     border: none;
     border-radius: 5px;
+    cursor: pointer;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #45a049;
 }
