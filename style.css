@@ -102,15 +102,15 @@ h1 {
     transition: all 0.3s ease;
     stroke: #333;
     stroke-width: 1.5px;
-    fill: transparent;  /* Transparent background for nodes */
-    stroke: #3498db;  /* Blue for default */
-    rx: 10;  /* Rounded corners for better look */
+    fill: transparent;
+    stroke: #3498db;
+    rx: 10;
     ry: 10;
 }
 
 /* Hover Effect on Nodes */
 .node rect:hover {
-    fill: #2980b9;  /* Change fill color on hover */
+    fill: #2980b9;
 }
 
 /* Node Text */
@@ -120,25 +120,25 @@ h1 {
     font-weight: bold;
     text-anchor: middle;
     white-space: nowrap;
-    pointer-events: none; /* Prevent text selection */
+    pointer-events: none;
 }
 
 /* Link (Arrow) Styles */
 .link {
     fill: none;
     stroke-width: 2px;
-    stroke: #aaa;  /* Default path color */
+    stroke: #aaa;
     marker-end: url(#arrow);
 }
 
 /* Success Path Style */
 .link.success {
-    stroke: green;  /* Green for success flow */
+    stroke: green;
 }
 
 /* Failure Path Style */
 .link.failure {
-    stroke: red;  /* Red for failure flow */
+    stroke: red;
 }
 
 /* Hover Effect on Links (arrows) */
@@ -154,8 +154,8 @@ defs marker#arrow {
     markerWidth: 10;
     markerHeight: 10;
     orient: auto;
-    refX: 12;
-    refY: 3;
+    refX: 15;
+    refY: 0;
 }
 
 /* Hover Effect for Arrows */
@@ -171,5 +171,5 @@ defs marker#arrow {
 }
 
 .link:hover {
-    stroke: #2980b9; /* Change color of link on hover */
+    stroke: #2980b9;
 }
