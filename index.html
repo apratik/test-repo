@@ -3,31 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflow Designer</title>
+    <title>Workflow Viewer</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.3/dagre-d3.min.js"></script>
+
 </head>
 <body>
-    <div id="app">
-        <h1>Workflow Designer</h1>
-
-        <!-- File upload input -->
-        <input type="file" id="jsonFileInput" accept=".json" />
+    <div class="container">
+        <h1>Workflow Viewer</h1>
         
-        <!-- Available components panel -->
-        <div id="componentPanel">
-            <h3>Available Components</h3>
-            <div id="componentButtons"></div>
+        <!-- File Upload Section -->
+        <div class="upload-section">
+            <label for="jsonFileInput">Upload Workflow JSON</label>
+            <input type="file" id="jsonFileInput" accept=".json">
         </div>
 
-        <!-- Graph area to display the workflow -->
-        <div id="graph"></div>
+        <!-- Buttons Section -->
+        <div class="buttons">
+            <button id="exportButton">Export Workflow JSON</button>
+            <button id="downloadGraphButton">Download Graph as SVG</button>
+            <button id="copyJsonButton">Copy Workflow JSON</button>
+        </div>
 
-        <!-- Buttons for exporting and copying JSON -->
-        <button id="downloadGraphButton">Download SVG</button>
-        <button id="copyJsonButton">Copy Workflow JSON</button>
+        <!-- Graph Container -->
+        <div id="graph-container">
+            <div id="graph"></div>
+        </div>        
     </div>
 
-    <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
