@@ -185,6 +185,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .attr("d", d => generateLinkPath(d))  // Custom function to generate link paths
                 .attr("stroke-width", 2)
                 .attr("fill", "none")
+                .attr("stroke", "#3498db")  // Stroke color for the link path
                 .attr("marker-end", "url(#arrow)")  // Attach the arrow at the end of the path
                 .merge(link)
                 .transition()
@@ -215,15 +216,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 .attr("text-anchor", "right")
                 .style("font-size", "10px")  // Smaller font size
                 .text(function(d) {
-                    // Check whether it's nextOnSuccess or nextOnFailure
-                    if (d.source.data.nextOnSuccess && d.source.data.nextOnSuccess.includes(d.target.data.taskId)) {
-                        return "Success";
-                    }
-                    if (d.source.data.nextOnFailure && d.source.data.nextOnFailure.includes(d.target.data.taskId)) {
-                        return "Failure";
-                    }
-                    return "";  // Default case
+                    return d.source.data.type;  // Display type as label
                 });
+
+            linkLabels.exit().remove();
         }
 
         // Function to generate the link path between two nodes
