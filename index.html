@@ -10,24 +10,20 @@
     <div id="app">
         <h1>Workflow Designer</h1>
 
-        <!-- Component Panel to display available components -->
+        <!-- Component Panel to add new components -->
         <div id="componentPanel">
             <h3>Available Components</h3>
             <div id="componentButtons"></div>
+            <input type="file" id="jsonFileInput" accept=".json" />
         </div>
 
         <!-- Graph area to display the workflow -->
-        <div id="graph" style="overflow: auto;"></div>
-
-        <!-- File upload to load a JSON file -->
-        <input type="file" id="jsonFileInput" accept=".json" />
+        <div id="graph"></div>
 
         <!-- Buttons for exporting and copying JSON -->
-        <div id="controls">
-            <button id="exportButton">Export Workflow</button>
-            <button id="downloadGraphButton">Download SVG</button>
-            <button id="copyJsonButton">Copy Workflow JSON</button>
-        </div>
+        <button id="exportButton">Export Workflow</button>
+        <button id="downloadGraphButton">Download SVG</button>
+        <button id="copyJsonButton">Copy Workflow JSON</button>
     </div>
 
     <script src="https://d3js.org/d3.v6.min.js"></script>
