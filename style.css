@@ -1,41 +1,175 @@
+/* General Styles */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f4f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
-#app {
-    display: flex;
-    flex-direction: column;
+.container {
+    width: 90%;
+    max-width: 1200px;
     padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 h1 {
     text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 2em;
+    font-weight: 600;
 }
 
-#componentPanel {
-    display: flex;
-    flex-direction: column;
-    width: 200px;
+.upload-section {
     margin-bottom: 20px;
 }
 
-#componentButtons {
-    margin-top: 10px;
+.upload-section label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.upload-section input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Buttons */
+.buttons {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.buttons button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.buttons button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.buttons button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Graph Container */
+#graph-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 600px;
+    overflow: hidden;
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
 }
 
 #graph {
-    margin-top: 20px;
-    border: 1px solid #ccc;
     width: 100%;
-    height: 600px;
+    height: 100%;
     overflow: auto;
+    position: absolute;
 }
 
-button {
-    margin: 5px;
-    padding: 10px;
+/* Node Styles */
+.node rect {
     cursor: pointer;
+    transition: all 0.3s ease;
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: transparent;  /* Transparent background for nodes */
+    stroke: #3498db;  /* Blue for default */
+    rx: 10;  /* Rounded corners for better look */
+    ry: 10;
+}
+
+/* Hover Effect on Nodes */
+.node rect:hover {
+    fill: #2980b9;  /* Change fill color on hover */
+}
+
+/* Node Text */
+.node text {
+    font-size: 14px;
+    fill: #333;
+    font-weight: bold;
+    text-anchor: middle;
+    white-space: nowrap;
+    pointer-events: none; /* Prevent text selection */
+}
+
+/* Link (Arrow) Styles */
+.link {
+    fill: none;
+    stroke-width: 2px;
+    stroke: #aaa;  /* Default path color */
+    marker-end: url(#arrow);
+}
+
+/* Success Path Style */
+.link.success {
+    stroke: green;  /* Green for success flow */
+}
+
+/* Failure Path Style */
+.link.failure {
+    stroke: red;  /* Red for failure flow */
+}
+
+/* Hover Effect on Links (arrows) */
+.link:hover {
+    stroke-width: 3px;
+    stroke: inherit;
+}
+
+/* Arrow Marker for Flow Links */
+defs marker#arrow {
+    fill: #3498db;
+    stroke: #3498db;
+    markerWidth: 10;
+    markerHeight: 10;
+    orient: auto;
+    refX: 12;
+    refY: 3;
+}
+
+/* Hover Effect for Arrows */
+.link:hover {
+    stroke-width: 3px;
+    stroke: inherit;
+}
+
+/* Styling for links with hover and transition */
+.link {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.link:hover {
+    stroke: #2980b9; /* Change color of link on hover */
 }
