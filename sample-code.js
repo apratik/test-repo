@@ -1,62 +1,80 @@
+/* PNG Rendering Specific Styles */
+.png-node rect {
+    fill: transparent;
+    stroke: #3498db; /* Blue color for stroke */
+    stroke-width: 2;
+    rx: 10; /* Rounded corners */
+    ry: 10;
+}
+
+.png-node text {
+    font-size: 12px;
+    text-align: center;
+    white-space: normal;
+    fill: black;
+}
+
+.png-link {
+    fill: none;
+    stroke: #3498db; /* Blue color for links */
+    stroke-width: 2;
+}
+
+.png-link.failure {
+    stroke: #e74c3c; /* Red color for failure links */
+}
+
+.png-link-label {
+    font-size: 10px;
+    text-anchor: middle;
+    fill: #7f8c8d; /* Grey color for link labels */
+}
+
+
+
+
+-----
+
+
+    // Function to download the workflow as PNG
 function downloadPNG() {
     const svgElement = document.querySelector("svg");
 
-    // Serialize SVG with inline styles
-    const svgWithStyles = serializeSVGWithStyles(svgElement);
+    // Create a clone of the SVG to apply PNG styles without affecting the original SVG
+    const clonedSVG = svgElement.cloneNode(true);
 
-    // Create a canvas to render the SVG
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-
-    // Set canvas size based on SVG dimensions
-    const { width, height } = svgElement.getBBox();
-    canvas.width = width;
-    canvas.height = height;
-
-    // Create an image from the SVG
-    const img = new Image();
-    img.onload = function () {
-        // Draw the SVG onto the canvas
-        context.drawImage(img, 0, 0);
-        // Export the canvas as a PNG
-        const pngData = canvas.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.href = pngData;
-        link.download = "workflow.png";
-        link.click();
-    };
-
-    // Handle cross-origin issues by using a data URL
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgWithStyles)}`;
-}
-
-// Function to inline styles into the SVG
-function serializeSVGWithStyles(svg) {
-    // Clone the SVG to avoid modifying the original
-    const clone = svg.cloneNode(true);
-
-    // Get all applied styles from stylesheets
-    const styleSheets = Array.from(document.styleSheets);
-    const styleText = [];
-
-    styleSheets.forEach(sheet => {
-        try {
-            if (sheet.cssRules) {
-                Array.from(sheet.cssRules).forEach(rule => {
-                    styleText.push(rule.cssText);
-                });
-            }
-        } catch (e) {
-            console.warn("Could not access CSS rules for stylesheet", sheet, e);
-        }
+    // Apply the PNG-specific styles by adding the .png-node and .png-link classes
+    clonedSVG.querySelectorAll('g.node').forEach(node => {
+        node.classList.add('png-node');
+    });
+    clonedSVG.querySelectorAll('path.link').forEach(link => {
+        link.classList.add('png-link');
+    });
+    clonedSVG.querySelectorAll('text.link-label').forEach(linkLabel => {
+        linkLabel.classList.add('png-link-label');
     });
 
-    // Create a <style> element and append it to the SVG
-    const styleElement = document.createElement("style");
-    styleElement.textContent = styleText.join("\n");
-    clone.insertBefore(styleElement, clone.firstChild);
+    // Append the cloned SVG to a temporary container
+    const tempContainer = document.createElement("div");
+    tempContainer.style.position = "absolute";
+    tempContainer.style.visibility = "hidden";
+    tempContainer.appendChild(clonedSVG);
+    document.body.appendChild(tempContainer);
 
-    // Serialize the SVG to a string
-    const serializer = new XMLSerializer();
-    return serializer.serializeToString(clone);
+    // Use the DOM-to-image library to convert the cloned SVG to a PNG image
+    domtoimage.toPng(clonedSVG)
+        .then(function (dataUrl) {
+            // Create a link element to download the PNG file
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = 'workflow.png';
+            link.click();
+
+            // Clean up the temporary container
+            document.body.removeChild(tempContainer);
+        })
+        .catch(function (error) {
+            console.error('Error generating PNG:', error);
+            document.body.removeChild(tempContainer);
+        });
 }
