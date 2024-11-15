@@ -1,34 +1,23 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+
+
 // Function to download the workflow as a PNG
 function downloadPNG() {
     const svgElement = document.querySelector("svg");
-    const svgData = new XMLSerializer().serializeToString(svgElement);
 
-    // Create a canvas element
-    const canvas = document.createElement("canvas");
-    const bbox = svgElement.getBoundingClientRect();
-    canvas.width = bbox.width;
-    canvas.height = bbox.height;
+    // Ensure the SVG is wrapped inside a container (optional, depending on your layout)
+    const container = document.createElement("div");
+    container.appendChild(svgElement.cloneNode(true));
 
-    const ctx = canvas.getContext("2d");
-
-    // Create an image to render the SVG data
-    const img = new Image();
-    const blob = new Blob([svgData], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-
-    img.onload = function () {
-        // Draw the SVG image on the canvas
-        ctx.drawImage(img, 0, 0);
-
-        // Download the canvas as a PNG
-        const link = document.createElement("a");
-        link.href = canvas.toDataURL("image/png");
-        link.download = "workflow.png";
-        link.click();
-
-        // Clean up the URL object
-        URL.revokeObjectURL(url);
-    };
-
-    img.src = url;
+    // Use dom-to-image to convert the container with SVG into a PNG
+    domtoimage.toPng(container)
+        .then(function (dataUrl) {
+            const link = document.createElement("a");
+            link.href = dataUrl;
+            link.download = "workflow.png";
+            link.click();
+        })
+        .catch(function (error) {
+            console.error("Error generating PNG:", error);
+        });
 }
