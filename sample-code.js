@@ -1,84 +1,34 @@
+// Function to download the workflow as a PNG
+function downloadPNG() {
+    const svgElement = document.querySelector("svg");
+    const svgData = new XMLSerializer().serializeToString(svgElement);
 
-const fs = require('fs');
-const { createWriteStream } = require('fs');
-const { createHybridFS } = require('hybrid-fs');
+    // Create a canvas element
+    const canvas = document.createElement("canvas");
+    const bbox = svgElement.getBoundingClientRect();
+    canvas.width = bbox.width;
+    canvas.height = bbox.height;
 
-function pullS3File(s3path, interval, callback) {
-    const hfs = createHybridFS();
+    const ctx = canvas.getContext("2d");
 
-    const pullFunction = async () => {
-        try {
-            const objectData = await hfs.getObject(s3path, false); 
-            const filePath = await saveObj(objectData);
-            callback(filePath, null);
-        } catch (error) {
-            callback(null, error);
-        }
+    // Create an image to render the SVG data
+    const img = new Image();
+    const blob = new Blob([svgData], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+
+    img.onload = function () {
+        // Draw the SVG image on the canvas
+        ctx.drawImage(img, 0, 0);
+
+        // Download the canvas as a PNG
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "workflow.png";
+        link.click();
+
+        // Clean up the URL object
+        URL.revokeObjectURL(url);
     };
 
-    pullFunction();
-    setInterval(pullFunction, interval);
+    img.src = url;
 }
-
-async function saveObj(objectData) {
-    return new Promise((resolve, reject) => {
-        const tempDir = fs.mkdtempSync('/tmp/s3-download-');
-        const filePath = `${tempDir}/downloaded_file`;
-        const fileStream = createWriteStream(filePath);
-
-        fileStream.on('error', (error) => {
-            reject(error);
-        });
-
-        objectData.on('error', (error) => {
-            reject(error);
-        });
-
-        objectData.pipe(fileStream);
-
-        fileStream.on('finish', () => {
-            resolve(filePath);
-        });
-    });
-}
-
-module.exports = { pullS3File };
-
-
-const { pullS3File } = require('./utils');
-
-async function refreshData(binEndpoint, localpath) {
-    pullS3File(binEndpoint, 5000, (location, error) => {
-        if (error) {
-            console.error('Error occurred:', error);
-        } else {
-            console.log('File downloaded successfully:', location);
-            // Proceed with refreshing the database or setting flags
-        }
-    });
-}
-
-module.exports = { refreshData };
-
-
-
-const fs = require('fs');
-const { createWriteStream } = require('fs');
-const { createHybridFS } = require('hybrid-fs');
-
-async function saveObj(objectData) {
-    const tempDir = fs.mkdtempSync('/tmp/s3-download-');
-    const filePath = `${tempDir}/downloaded_file`;
-
-    const fileStream = createWriteStream(filePath);
-    objectData.pipe(fileStream);
-
-    await new Promise((resolve, reject) => {
-        fileStream.on('error', reject);
-        fileStream.on('finish', resolve);
-    });
-
-    return filePath;
-}
-
-module.exports = { saveObj };
