@@ -1,41 +1,29 @@
-// Function to download the PNG
-function downloadPNG() {
+// Function to download the SVG
+function downloadSVG() {
     const svgElement = document.querySelector("svg");
+
+    // Set a white background for the SVG
+    const svgNS = "http://www.w3.org/2000/svg";
+    const background = document.createElementNS(svgNS, "rect");
+    background.setAttribute("x", 0);
+    background.setAttribute("y", 0);
+    background.setAttribute("width", svgElement.getAttribute("width"));
+    background.setAttribute("height", svgElement.getAttribute("height"));
+    background.setAttribute("fill", "white");
+
+    // Insert the background rect as the first child of the SVG
+    svgElement.insertBefore(background, svgElement.firstChild);
+
+    // Serialize the SVG
     const svgData = new XMLSerializer().serializeToString(svgElement);
-    
-    // Create an image element and load the serialized SVG as its source
-    const img = new Image();
-    
-    // If using external resources, set crossOrigin for CORS
-    img.crossOrigin = "anonymous";  // This handles CORS for external images
-    
-    // Create a Blob to hold the SVG data and load it into the image
-    const svgBlob = new Blob([svgData], {type: "image/svg+xml"});
-    const url = URL.createObjectURL(svgBlob);
-    
-    img.onload = function() {
-        // Create a canvas to draw the image
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        
-        // Set the canvas size to match the SVG
-        canvas.width = svgElement.width.baseVal.value;
-        canvas.height = svgElement.height.baseVal.value;
-        
-        // Draw the image onto the canvas
-        ctx.drawImage(img, 0, 0);
-        
-        // Create a link to download the canvas as a PNG
-        const link = document.createElement("a");
-        link.href = canvas.toDataURL("image/png");  // Use the canvas data URL
-        link.download = "workflow.png";  // Set download file name
-        
-        // Trigger the download
-        link.click();
-        
-        // Clean up the object URL
-        URL.revokeObjectURL(url);
-    };
-    
-    img.src = url; // Start loading the image
+    const blob = new Blob([svgData], { type: "image/svg+xml" });
+
+    // Create a link for downloading the SVG
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "workflow.svg";
+    link.click();
+
+    // Remove the white background rect after download to avoid altering the original SVG
+    svgElement.removeChild(background);
 }
