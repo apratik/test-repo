@@ -1,49 +1,41 @@
+// Function to download the PNG
 function downloadPNG() {
     const svgElement = document.querySelector("svg");
-    
-    // Serialize the SVG to a string
     const svgData = new XMLSerializer().serializeToString(svgElement);
-
-    // Create a Blob for the SVG data
-    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-
-    // Create an object URL from the Blob
-    const url = URL.createObjectURL(svgBlob);
-
+    
+    // Create an image element and load the serialized SVG as its source
     const img = new Image();
-    img.crossOrigin = "anonymous"; // Avoid CORS issues for embedded data
-    img.onload = function () {
+    
+    // If using external resources, set crossOrigin for CORS
+    img.crossOrigin = "anonymous";  // This handles CORS for external images
+    
+    // Create a Blob to hold the SVG data and load it into the image
+    const svgBlob = new Blob([svgData], {type: "image/svg+xml"});
+    const url = URL.createObjectURL(svgBlob);
+    
+    img.onload = function() {
+        // Create a canvas to draw the image
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-
-        // Set canvas size to match SVG dimensions
-        const width = svgElement.width.baseVal.value || 800; // Fallback width
-        const height = svgElement.height.baseVal.value || 600; // Fallback height
-        canvas.width = width;
-        canvas.height = height;
-
-        // Draw the image on the canvas
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert canvas to PNG data URL
-        const pngData = canvas.toDataURL("image/png");
-
-        // Trigger download
+        
+        // Set the canvas size to match the SVG
+        canvas.width = svgElement.width.baseVal.value;
+        canvas.height = svgElement.height.baseVal.value;
+        
+        // Draw the image onto the canvas
+        ctx.drawImage(img, 0, 0);
+        
+        // Create a link to download the canvas as a PNG
         const link = document.createElement("a");
-        link.href = pngData;
-        link.download = "workflow.png";
-        document.body.appendChild(link); // Required for Firefox
+        link.href = canvas.toDataURL("image/png");  // Use the canvas data URL
+        link.download = "workflow.png";  // Set download file name
+        
+        // Trigger the download
         link.click();
-        document.body.removeChild(link);
-
-        // Cleanup object URL
+        
+        // Clean up the object URL
         URL.revokeObjectURL(url);
     };
-
-    img.onerror = function (err) {
-        console.error("Failed to load the image", err);
-        alert("There was an issue processing the SVG. Ensure all resources are inlined.");
-    };
-
-    img.src = url; // Set the image source to the Blob URL
+    
+    img.src = url; // Start loading the image
 }
