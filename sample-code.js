@@ -1,29 +1,23 @@
-// Function to download the SVG
-function downloadSVG() {
-    const svgElement = document.querySelector("svg");
-
-    // Set a white background for the SVG
-    const svgNS = "http://www.w3.org/2000/svg";
-    const background = document.createElementNS(svgNS, "rect");
-    background.setAttribute("x", 0);
-    background.setAttribute("y", 0);
-    background.setAttribute("width", svgElement.getAttribute("width"));
-    background.setAttribute("height", svgElement.getAttribute("height"));
-    background.setAttribute("fill", "white");
-
-    // Insert the background rect as the first child of the SVG
-    svgElement.insertBefore(background, svgElement.firstChild);
-
-    // Serialize the SVG
-    const svgData = new XMLSerializer().serializeToString(svgElement);
-    const blob = new Blob([svgData], { type: "image/svg+xml" });
-
-    // Create a link for downloading the SVG
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "workflow.svg";
-    link.click();
-
-    // Remove the white background rect after download to avoid altering the original SVG
-    svgElement.removeChild(background);
+if (d.source.data.nextOnSuccess && d.source.data.nextOnSuccess.includes(d.target.data.taskId)) {
+    // Check if type is DECISION
+    if (d.source.data.type === "DECISION") {
+        // Check if more than one element exists in nextOnSuccess
+        if (d.source.data.nextOnSuccess.length > 1) {
+            const index = d.source.data.nextOnSuccess.indexOf(d.target.data.taskId);
+            if (index === 0) {
+                // First element gets "Success:if"
+                return "Success:if";
+            } else {
+                // All subsequent elements get "Success:else"
+                return "Success:else";
+            }
+        }
+    }
+    // If not DECISION or only one element, return regular "Success"
+    return "Success";
+} else if (d.source.data.nextOnFailure && d.source.data.nextOnFailure.includes(d.target.data.taskId)) {
+    // If taskId is in nextOnFailure, return "Error"
+    return "Error";
 }
+
+return ""; // Default case
